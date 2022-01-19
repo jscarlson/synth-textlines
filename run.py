@@ -15,6 +15,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--count", type=int, required=True, default=1_000,
         help="Number of textlines to generate")
+    parser.add_argument("--language", type=str, required=True, default="en",
+        help="Language of text being generated")
     parser.add_argument("--font_folder", type=str, required=True, default="./fonts/en",
         help="Path to folder with font files of interest")
     parser.add_argument("--char_folder", type=str, required=True, default="./chars/en",
@@ -77,7 +79,6 @@ if __name__ == '__main__':
     anns_dict = {SETNAMES[0]: [], SETNAMES[1]: [], SETNAMES[2]: []}
     images_dict = {SETNAMES[0]: [], SETNAMES[1]: [], SETNAMES[2]: []}
     anno_id = 0
-    synth_texts = []
 
     # save for images
     images_path = os.path.join(outdir, "images")
@@ -90,14 +91,14 @@ if __name__ == '__main__':
             setname, font_paths, char_sets_and_props, images_path, 
             synth_transform, coverage_dict,
             args.textline_max_length, args.textline_size, args.textline_max_spaces,
-            args.textline_numbers_geom_p, args.textline_max_numbers
+            args.textline_numbers_geom_p, args.textline_max_numbers,
+            args.language
         )
 
         for image_id in tqdm(range(count)):
             
             bboxes, image_name, synth_image, synth_text = \
                 textline_generator.generate_synthetic_textline(char_dist=10, image_id=image_id)
-            synth_texts.append(synth_text)
 
             imgw, imgh = synth_image.width, synth_image.height
             image = {"width": imgw, "height": imgh, "id": image_id, "file_name": image_name}
@@ -113,7 +114,6 @@ if __name__ == '__main__':
                 anno_id += 1
 
     # output
-    print(synth_texts)
     for setname in SETNAMES:
         coco_json = COCO_JSON_SKELETON.copy()
         coco_json["images"] = images_dict[setname]

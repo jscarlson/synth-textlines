@@ -11,7 +11,8 @@ class TextlineGenerator:
     def __init__(
             self, setname, font_paths, char_sets_and_props, save_path, 
             synth_transform, coverage_dict,
-            max_length, size, max_spaces, num_geom_p, max_numbers
+            max_length, size, max_spaces, num_geom_p, max_numbers,
+            language
         ):
 
         self.setname = setname
@@ -26,7 +27,8 @@ class TextlineGenerator:
         self.max_spaces = max_spaces
         self.num_geom_p = num_geom_p
         self.max_numbers = max_numbers
-        self.low_chars = ",."
+        self.low_chars = ",.ygjqp"
+        self.language = language
 
     def select_font(self):
 
