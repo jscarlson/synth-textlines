@@ -3,11 +3,10 @@ from tqdm import tqdm
 import json
 import argparse
 
-import torchvision.transforms as T
-
-from utils.colors import color_shift_from_targets, color_shift
 from utils.fonts import load_chars, get_unicode_coverage_from_ttf
+from utils.coco import create_coco_annotation_field
 from core.core import generate_textline
+from utils.transforms import TRANSFORM_DICT
 
 
 if __name__ == '__main__':
@@ -44,24 +43,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # create transforms
-    if args.transforms == "default":
-        synth_transform = T.Compose([
-            T.ToTensor(),
-            T.RandomApply([color_shift], p=0.25),
-            T.RandomApply([T.ColorJitter(brightness=0.5, contrast=0.3, saturation=0.3, hue=0.3)], p=0.5),
-            T.RandomApply([T.GaussianBlur(11)], p=0.35),
-            T.RandomInvert(p=0.2),
-            T.RandomGrayscale(p=0.2),
-            T.ToPILImage()
-        ])
-    elif args.transforms == "pr":    
-        synth_transform = T.Compose([
-            T.ToTensor(),
-            lambda x: color_shift_from_targets(x, targets=[[234,234,212], [225, 207, 171]]),
-            T.RandomApply([T.GaussianBlur(11)], p=0.35),
-            T.ToPILImage()
-        ])
-
+    synth_transform = TRANSFORM_DICT[args.transforms]
+    
     # get font paths
     font_paths = [os.path.join(args.font_folder, x) for x in os.listdir(args.font_folder)]
 
@@ -77,9 +60,9 @@ if __name__ == '__main__':
     chosen_char_paths = [x for x in char_paths if any(c in x for c in char_sets)]
     print(f"Chosen character sets: {chosen_char_paths}")
     char_set_props = [float(x) for x in args.char_set_props.split(",")]
-    assert sum(char_set_props) == 1, "Character set proportions do not sum to 1!"
+    assert 0.9999999 < sum(char_set_props) <= 1, f"Character set proportions do not sum to 1! They sum to {sum(char_set_props)}!"
     char_set_lists = [load_chars(x) for x in chosen_char_paths]
-    char_sets_and_props = zip(char_set_lists, char_set_props)
+    char_sets_and_props = list(zip(char_set_lists, char_set_props))
     
     # create output folder
     outdir = args.output_folder
@@ -87,7 +70,7 @@ if __name__ == '__main__':
 
     # train test val split
     train_test_val_split = [float(x) for x in args.train_test_val_props.split(",")]
-    train_test_val_counts = [args.count * x for x in train_test_val_split]
+    train_test_val_counts = [int(args.count * x) for x in train_test_val_split]
     
     # set dicts
     SETNAMES = ("train", "test", "val",)
@@ -101,9 +84,10 @@ if __name__ == '__main__':
 
     # create segs
     for setname, count in zip(SETNAMES, train_test_val_counts):
-        for image_id in tqdm(range(count)):
-
+        for image_id in range(count):
+            
             bboxes, image_name, synth_image = generate_textline(
+                setname,
                 font_paths, char_sets_and_props, images_path,
                 image_id, synth_transform, coverage_dict,
                 max_length=args.textline_max_length,
@@ -113,7 +97,7 @@ if __name__ == '__main__':
                 max_numbers=args.textline_max_numbers
             )
 
-            imgw, imgh = synth_image.shape
+            imgw, imgh = synth_image.width, synth_image.height
             image = {"width": imgw, "height": imgh, "id": image_id, "file_name": image_name}
             images_dict[setname].append(image)
 
@@ -122,17 +106,7 @@ if __name__ == '__main__':
                 assert (x >= 0) and (y >= 0)
                 if (x + width > imgw): width = imgw - x - 1
                 if (y + height > imgh): height = imgh - y - 1
-                annotation = {
-                    "id": anno_id, 
-                    "image_id": image_id, 
-                    "category_id": 0,
-                    "area": int(width*height), 
-                    "bbox": [int(x), int(y), int(width), int(height)],
-                    "segmentation": [[int(x), int(y), int(x)+int(width), int(y), 
-                        int(x)+int(width), int(y)+int(height), int(x), int(y)+int(height)]],
-                    "iscrowd": 0,
-                    "ignore": 0
-                }
+                annotation = create_coco_annotation_field(anno_id, image_id, width, height, x, y)
                 anns_dict[setname].append(annotation)
                 anno_id += 1
 
