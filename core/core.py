@@ -6,102 +6,119 @@ import os
 from utils.misc import to_string_list
 
 
-def generate_textline(
-        setname, font_paths, char_sets_and_props, save_path, 
-        image_id, synth_transform, coverage_dict,
-        max_length, size, max_spaces, num_geom_p, max_numbers
-    ):
+class TextlineGenerator:
 
-    # get font
-    font_path = np.random.choice(font_paths)
-    digital_font = ImageFont.truetype(font_path, size=size)
-    covered_chars = set(coverage_dict[font_path])
+    def __init__(
+            self, setname, font_paths, char_sets_and_props, save_path, 
+            synth_transform, coverage_dict,
+            max_length, size, max_spaces, num_geom_p, max_numbers
+        ):
 
-    # create synthetic sequence
-    seq_chars = []
-    num_chars = np.random.choice(range(1, max_length))
-    for char_set, prop in char_sets_and_props:
-        char_set_count = round(prop * num_chars)
-        available_chars = covered_chars.intersection(set(char_set))
-        seq_chars.extend(np.random.choice(list(available_chars), char_set_count))
-    
-    num_spaces = np.random.choice(range(0, max_spaces))
-    seq_spaces = num_spaces * ["_"]
-    
-    num_numbers = np.random.choice(range(0, max_numbers))
-    seq_numbers = np.random.geometric(p=num_geom_p, size=num_numbers)
+        self.setname = setname
+        self.font_paths = font_paths
+        self.char_sets_and_props = char_sets_and_props
+        self.save_path = save_path
+        self.synth_transform = synth_transform
+        self.coverage_dict = coverage_dict
+        self.max_length = max_length
+        self.size = size
+        self.font_size = size
+        self.max_spaces = max_spaces
+        self.num_geom_p = num_geom_p
+        self.max_numbers = max_numbers
+        self.low_chars = ",."
 
-    synth_seq = to_string_list(seq_numbers) + to_string_list(seq_spaces) + to_string_list(seq_chars)
-    np.random.shuffle(synth_seq)
-    synth_text = "".join(synth_seq)
-    print(f"Synth text: {synth_text}")
+    def select_font(self):
 
-    # create bboxes, image
-    bboxes, canvas = generate_image_and_bboxes(synth_text, digital_font, font_size=size, num_symbols=len(synth_text))
+        font_path = np.random.choice(self.font_paths)
+        self.digital_font = ImageFont.truetype(font_path, size=self.size)
+        self.covered_chars = set(self.coverage_dict[font_path])
 
-    # output
-    out_image = synth_transform(canvas)
-    image_name = f"{setname}_{image_id}.png"
-    out_image.save(os.path.join(save_path, image_name))
+    def generate_synthetic_textline_text(self):
 
-    return bboxes, image_name, out_image
-
-
-def generate_image_and_bboxes(
-        text, font, font_size, num_symbols,
-        char_dist=2, low_chars=",."
-    ):
-    
-    # create character renders
-    char_renders = []
-    for c in text:
-        img = Image.new('RGB', (font_size*4, font_size*4), (0, 0, 0))
-        draw = ImageDraw.Draw(img)
-        draw.text((font_size,font_size), c, (255, 255, 255), font=font, anchor='mm')
-        bbox = img.getbbox()
-        if bbox is None:
-            num_symbols -= 1
-            continue
-        x0, y0, x1, y1 = bbox
-        pbbox = (x0, y0, x1, y1)
-        char_render = ImageOps.invert(img.crop(pbbox))
-        char_renders.append(char_render)
-
-    # create canvas
-    total_width = sum(cr.width for cr in char_renders)
-    canvas_w = int((char_dist * (num_symbols + 1)) + total_width)
-    canvas_h = int(font_size) 
-    canvas = Image.new('RGB', (canvas_w, canvas_h), (255, 255, 255))
-    
-    # more init
-    bboxes = []
-    x = char_dist
-
-    # pasting
-    for i in range(num_symbols):
-
-        # get render
-        curr_text = text[i]
-        curr_render = char_renders[i]
-        w, h = curr_render.size
+        seq_chars = []
+        num_chars = np.random.choice(range(1, self.max_length))
+        for char_set, prop in self.char_sets_and_props:
+            char_set_count = round(prop * num_chars)
+            available_chars = self.covered_chars.intersection(set(char_set))
+            seq_chars.extend(np.random.choice(list(available_chars), char_set_count))
         
-        # account for spaces
-        if curr_text == "_":
-            x += w
-            continue
+        num_spaces = np.random.choice(range(0, self.max_spaces))
+        seq_spaces = num_spaces * ["_"]
+        
+        num_numbers = np.random.choice(range(0, self.max_numbers))
+        seq_numbers = np.random.geometric(p=self.num_geom_p, size=num_numbers)
 
-        # create y offset
-        height_diff = canvas_h - h
-        if height_diff < 0: height_diff = 0
-        y = height_diff // 2
-        if curr_text in low_chars:
-            y = canvas_h - h - char_dist
+        synth_seq = to_string_list(seq_numbers) + to_string_list(seq_spaces) + to_string_list(seq_chars)
+        np.random.shuffle(synth_seq)
+        synth_text = "".join(synth_seq)
+        self.num_symbols = len(synth_text)
 
-        # pasting!
-        canvas.paste(curr_render, (x, y))
-        bboxes.append((x, y, w, h))
+        return synth_text
 
-        # move x position along
-        x += w + char_dist
-    
-    return bboxes, canvas
+    def generate_synthetic_textline_image(self, text, char_dist):
+
+        # create character renders
+        char_renders = []
+        for c in text:
+            img = Image.new('RGB', (self.font_size*4, self.font_size*4), (0, 0, 0))
+            draw = ImageDraw.Draw(img)
+            draw.text((self.font_size, self.font_size), c, (255, 255, 255), 
+                font=self.digital_font, anchor='mm')
+            bbox = img.getbbox()
+            if bbox is None:
+                self.num_symbols -= 1
+                continue
+            x0, y0, x1, y1 = bbox
+            pbbox = (x0, y0, x1, y1)
+            char_render = ImageOps.invert(img.crop(pbbox))
+            char_renders.append(char_render)
+
+        # create canvas
+        total_width = sum(cr.width for cr in char_renders)
+        canvas_w = int((char_dist * (self.num_symbols + 1)) + total_width)
+        canvas_h = int(self.font_size) 
+        canvas = Image.new('RGB', (canvas_w, canvas_h), (255, 255, 255))
+        
+        # pasting
+        bboxes = []
+        x = char_dist
+        for i in range(self.num_symbols):
+
+            # get render
+            curr_text = text[i]
+            curr_render = char_renders[i]
+            w, h = curr_render.size
+            
+            # account for spaces
+            if curr_text == "_":
+                x += w
+                continue
+
+            # create y offset
+            height_diff = canvas_h - h
+            if height_diff < 0: height_diff = 0
+            y = height_diff // 2
+            if curr_text in self.low_chars:
+                y = canvas_h - h - char_dist
+
+            # pasting!
+            canvas.paste(curr_render, (x, y))
+            bboxes.append((x, y, w, h))
+
+            # move x position along
+            x += w + char_dist
+        
+        return bboxes, canvas
+
+    def generate_synthetic_textline(self, char_dist, image_id):
+
+        self.select_font()
+        textline_text = self.generate_synthetic_textline_text()
+        bboxes, canvas = self.generate_synthetic_textline_image(textline_text, char_dist)
+        out_image = self.synth_transform(canvas)
+
+        image_name = f"{self.setname}_{image_id}.png"
+        out_image.save(os.path.join(self.save_path, image_name))
+
+        return bboxes, image_name, out_image, textline_text

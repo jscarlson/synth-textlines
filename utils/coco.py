@@ -1,5 +1,14 @@
 
 
+COCO_JSON_SKELETON = {
+        "images": [],
+        "annotations": [],
+        "info": {"year": 2022, "version": "1.0", "contributor": "synth-textlines"},
+        "categories": [{"id": 0, "name": "character"}],
+        "licenses": ""
+    }
+
+
 def create_coco_annotation_field(anno_id, image_id, width, height, x, y):
     return {
         "id": anno_id, 

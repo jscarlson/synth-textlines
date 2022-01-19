@@ -4,8 +4,8 @@ import json
 import argparse
 
 from utils.fonts import load_chars, get_unicode_coverage_from_ttf
-from utils.coco import create_coco_annotation_field
-from core.core import generate_textline
+from utils.coco import create_coco_annotation_field, COCO_JSON_SKELETON
+from core.core import TextlineGenerator
 from utils.transforms import TRANSFORM_DICT
 
 
@@ -77,6 +77,7 @@ if __name__ == '__main__':
     anns_dict = {SETNAMES[0]: [], SETNAMES[1]: [], SETNAMES[2]: []}
     images_dict = {SETNAMES[0]: [], SETNAMES[1]: [], SETNAMES[2]: []}
     anno_id = 0
+    synth_texts = []
 
     # save for images
     images_path = os.path.join(outdir, "images")
@@ -84,18 +85,19 @@ if __name__ == '__main__':
 
     # create segs
     for setname, count in zip(SETNAMES, train_test_val_counts):
-        for image_id in range(count):
+
+        textline_generator = TextlineGenerator(
+            setname, font_paths, char_sets_and_props, images_path, 
+            synth_transform, coverage_dict,
+            args.textline_max_length, args.textline_size, args.textline_max_spaces,
+            args.textline_numbers_geom_p, args.textline_max_numbers
+        )
+
+        for image_id in tqdm(range(count)):
             
-            bboxes, image_name, synth_image = generate_textline(
-                setname,
-                font_paths, char_sets_and_props, images_path,
-                image_id, synth_transform, coverage_dict,
-                max_length=args.textline_max_length,
-                size=args.textline_size, 
-                max_spaces=args.textline_max_spaces,
-                num_geom_p=args.textline_numbers_geom_p, 
-                max_numbers=args.textline_max_numbers
-            )
+            bboxes, image_name, synth_image, synth_text = \
+                textline_generator.generate_synthetic_textline(char_dist=10, image_id=image_id)
+            synth_texts.append(synth_text)
 
             imgw, imgh = synth_image.width, synth_image.height
             image = {"width": imgw, "height": imgh, "id": image_id, "file_name": image_name}
@@ -110,17 +112,10 @@ if __name__ == '__main__':
                 anns_dict[setname].append(annotation)
                 anno_id += 1
 
-    # save output
-    coco_json_skeletion = {
-        "images": [],
-        "annotations": [],
-        "info": {"year": 2022, "version": "1.0", "contributor": "synth-textlines"},
-        "categories": [{"id": 0, "name": "character"}],
-        "licenses": ""
-    }
-
+    # output
+    print(synth_texts)
     for setname in SETNAMES:
-        coco_json = coco_json_skeletion.copy()
+        coco_json = COCO_JSON_SKELETON.copy()
         coco_json["images"] = images_dict[setname]
         coco_json["annotations"] = anns_dict[setname]
         with open(os.path.join(outdir, f"synth_coco_{setname}.json"), 'w') as f:
