@@ -59,7 +59,7 @@ if __name__ == '__main__':
     # get char paths
     char_paths = [os.path.join(args.char_folder, x) for x in os.listdir(args.char_folder)]
     char_sets = args.char_sets.split(",")
-    chosen_char_paths = [x for x in char_paths if any(c in x for c in char_sets)]
+    chosen_char_paths = [[x for x in char_paths if c in x][0] for c in char_sets]
     print(f"Chosen character sets: {chosen_char_paths}")
     char_set_props = [float(x) for x in args.char_set_props.split(",")]
     assert 0.9999999 < sum(char_set_props) <= 1, f"Character set proportions do not sum to 1! They sum to {sum(char_set_props)}!"
