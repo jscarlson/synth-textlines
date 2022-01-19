@@ -15,32 +15,32 @@ if __name__ == '__main__':
     # args
     parser = argparse.ArgumentParser()
     parser.add_argument("--count", type=int, required=True, default=1_000,
-        help="")
+        help="Number of textlines to generate")
     parser.add_argument("--font_folder", type=str, required=True, default="./fonts/en",
-        help="")
+        help="Path to folder with font files of interest")
     parser.add_argument("--char_folder", type=str, required=True, default="./chars/en",
-        help="")
+        help="Path to folder with character set text files of interest")
     parser.add_argument("--char_sets", type=str, required=True, default="latin,numerals,punc_basic",
-        help="")
+        help="Names of character sets to utilize as a comma separated list")
     parser.add_argument("--char_set_props", type=str, required=True, default="1.0,0.0,0.0",
-        help="")
+        help="Proportions of character sets to use for generation as a comma separated list")
     parser.add_argument("--train_test_val_props", type=str, default="0.8,0.2,0.0",
-        help="")
+        help="Proportions of train/test/val sets as a comma separated list")
     parser.add_argument("--output_folder", type=str, default="./output",
-        help="")
+        help="Path to folder for saving output")
     parser.add_argument("--textline_max_numbers", type=int, default=2,
-        help="")
+        help="The maximum number of numbers to generate in a textline")
     parser.add_argument("--textline_numbers_geom_p", type=float, default=0.005,
-        help="")
+        help="The p parameter in a geometric distribution, used for sampling numbers")
     parser.add_argument("--textline_size", type=int, default=64,
-        help="")
+        help="The size of a textline's font")
     parser.add_argument("--textline_max_length", type=int, default=20,
-        help="")
+        help="The max number of characters in a textline")
     parser.add_argument("--textline_max_spaces", type=int, default=5,
-        help="")
+        help="The max number of spaces in a textline")
     parser.add_argument('--transforms',
         choices=['default', 'pr'], type=str, default="default",
-        help="")
+        help="Option for transforming synthetically rendered textline")
     args = parser.parse_args()
 
     # create transforms
