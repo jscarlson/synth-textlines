@@ -58,7 +58,7 @@ class TextlineGenerator:
 
         return synth_text
 
-    def generate_synthetic_textline_image(self, text, char_dist):
+    def generate_synthetic_textline_image(self, text, char_dist, char_dist_std=3):
 
         # create character renders
         char_renders = []
@@ -109,7 +109,8 @@ class TextlineGenerator:
             bboxes.append((x, y, w, h))
 
             # move x position along
-            x += w + char_dist
+            x_jiggle = min(char_dist, abs(np.random.normal(0, char_dist_std)))
+            x += w + int(char_dist - x_jiggle)
         
         return bboxes, canvas
 
