@@ -100,6 +100,9 @@ if __name__ == '__main__':
             bboxes, image_name, synth_image, synth_text = \
                 textline_generator.generate_synthetic_textline(char_dist=10, image_id=image_id)
 
+            if all(c == "_" for c in synth_text):
+                continue
+
             imgw, imgh = synth_image.width, synth_image.height
             image = {"width": imgw, "height": imgh, "id": image_id, "file_name": image_name}
             images_dict[setname].append(image)
