@@ -58,7 +58,36 @@ class TextlineGenerator:
 
         return synth_text
 
-    def generate_synthetic_textline_image(self, text, char_dist, char_dist_std=3):
+    def generate_synthetic_textline_image_latin_based(self, text, char_dist, char_dist_std=3):
+
+        W = sum(self.digital_font.getsize(c)[0] + char_dist for c in text)
+        H = self.font_size
+        image = Image.new("RGB", (W, H), (255,255,255))
+        draw = ImageDraw.Draw(image)
+        x_pos, y_pos = 0, 0
+        bboxes = []
+        
+        for i, c in enumerate(text):
+
+            w, h = self.digital_font.getmask(c).size
+            bottom_1 = self.digital_font.getsize(c)[1]
+            bottom_2 = self.digital_font.getsize(text[:i+1])[1]
+            bottom = bottom_1 if bottom_1 < bottom_2 else bottom_2
+
+            if c == "_":
+                x_pos += w
+                continue
+
+            bbox = (x_pos, max(bottom - h, 0), w, h)
+            bboxes.append(bbox)
+
+            draw.text((x_pos, y_pos), c, font=self.digital_font, fill=1)
+            x_jiggle = min(char_dist, abs(np.random.normal(0, char_dist_std)))
+            x_pos += w + int(char_dist - x_jiggle)
+            
+        return bboxes, image
+    
+    def generate_synthetic_textline_image_character_based(self, text, char_dist, char_dist_std=3):
 
         # create character renders
         char_renders = []
@@ -118,9 +147,11 @@ class TextlineGenerator:
 
         self.select_font()
         textline_text = self.generate_synthetic_textline_text()
-        bboxes, canvas = self.generate_synthetic_textline_image(textline_text, char_dist)
+        if self.language == "jp":
+            bboxes, canvas = self.generate_synthetic_textline_image_character_based(textline_text, char_dist)
+        elif self.language == "en":
+            bboxes, canvas = self.generate_synthetic_textline_image_latin_based(textline_text, char_dist)
         out_image = self.synth_transform(canvas)
-
         image_name = f"{self.setname}_{image_id}.png"
         out_image.save(os.path.join(self.save_path, image_name))
 
