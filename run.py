@@ -42,6 +42,8 @@ if __name__ == '__main__':
     parser.add_argument('--transforms',
         choices=['default', 'pr'], type=str, default="default",
         help="Option for transforming synthetically rendered textline")
+    parser.add_argument('--vertical', action='store_true', default=False,
+        help="Generate vertically oriented textlines")
     args = parser.parse_args()
 
     # create transforms
@@ -92,7 +94,7 @@ if __name__ == '__main__':
             synth_transform, coverage_dict,
             args.textline_max_length, args.textline_size, args.textline_max_spaces,
             args.textline_numbers_geom_p, args.textline_max_numbers,
-            args.language
+            args.language, args.vertical
         )
 
         for image_id in tqdm(range(count)):

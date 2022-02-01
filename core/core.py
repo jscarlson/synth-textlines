@@ -12,7 +12,7 @@ class TextlineGenerator:
             self, setname, font_paths, char_sets_and_props, save_path, 
             synth_transform, coverage_dict,
             max_length, size, max_spaces, num_geom_p, max_numbers,
-            language
+            language, vertical
         ):
 
         self.setname = setname
@@ -29,6 +29,7 @@ class TextlineGenerator:
         self.max_numbers = max_numbers
         self.low_chars = ",.ygjqp"
         self.language = language
+        self.vertical = vertical
 
     def select_font(self):
 
@@ -106,10 +107,16 @@ class TextlineGenerator:
             char_renders.append(char_render)
 
         # create canvas
-        total_width = sum(cr.width for cr in char_renders)
-        canvas_w = int((char_dist * (self.num_symbols + 1)) + total_width)
-        canvas_h = int(self.font_size) 
-        canvas = Image.new('RGB', (canvas_w, canvas_h), (255, 255, 255))
+        if not self.vertical:
+            total_width = sum(cr.width for cr in char_renders)
+            canvas_w = int((char_dist * (self.num_symbols + 1)) + total_width)
+            canvas_h = int(self.font_size) 
+            canvas = Image.new('RGB', (canvas_w, canvas_h), (255, 255, 255))
+        else:
+            total_height = sum(cr.height for cr in char_renders)
+            canvas_h = int((char_dist * (self.num_symbols + 1)) + total_height)
+            canvas_w = int(self.font_size) 
+            canvas = Image.new('RGB', (canvas_w, canvas_h), (255, 255, 255))
         
         # pasting
         bboxes = []
@@ -123,23 +130,34 @@ class TextlineGenerator:
             
             # account for spaces
             if curr_text == "_":
-                x += w
+                if self.vertical:
+                    y += h
+                else:
+                    x += w
                 continue
 
             # create y offset
-            height_diff = canvas_h - h
-            if height_diff < 0: height_diff = 0
-            y = height_diff // 2
-            if curr_text in self.low_chars:
-                y = canvas_h - h - char_dist
+            if not self.vertical:
+                height_diff = canvas_h - h
+                if height_diff < 0: height_diff = 0
+                y = height_diff // 2
+                if curr_text in self.low_chars:
+                    y = canvas_h - h - char_dist
+            else:
+                width_diff = canvas_w - w
+                if width_diff < 0: width_diff = 0
+                x = width_diff // 2
 
             # pasting!
             canvas.paste(curr_render, (x, y))
             bboxes.append((x, y, w, h))
 
             # move x position along
-            x_jiggle = min(char_dist, abs(np.random.normal(0, char_dist_std)))
-            x += w + int(char_dist - x_jiggle)
+            jiggle = min(char_dist, abs(np.random.normal(0, char_dist_std)))
+            if not self.vertical:                
+                x += w + int(char_dist - jiggle)
+            else:
+                y += h + int(char_dist - jiggle)
         
         return bboxes, canvas
 
