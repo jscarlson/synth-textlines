@@ -4,6 +4,7 @@ import argparse
 import subprocess
 import os
 import shutil
+from tqdm import tqdm
 
 
 def process_coco_json(coco_json, input_n, tag):
@@ -25,7 +26,7 @@ def combine_coco_images_and_annotations(images_1, images_2, annotations_1, annot
     combined_images = images_1 + images_2
     combined_annotations = annotations_1 + annotations_2
     new_image_id = 0
-    for im in combined_images:
+    for im in tqdm(combined_images):
         old_image_id = im["id"]
         im["id"] = new_image_id
         for a in combined_annotations:
@@ -33,7 +34,7 @@ def combine_coco_images_and_annotations(images_1, images_2, annotations_1, annot
                 a["image_id"] = new_image_id
         new_image_id += 1
     new_anno_id = 0
-    for a in combined_annotations:
+    for a in tqdm(combined_annotations):
         a["id"] = new_anno_id
         new_anno_id += 1
     return combined_images, combined_annotations
@@ -69,6 +70,7 @@ if __name__ == '__main__':
         coco_json_2 = json.load(f)
         images_2, annotations_2 = process_coco_json(coco_json_2, args.input_n_2, tag="inp2")
 
+    print("Combining JSONs!")
     combo_images, combo_annotations = \
         combine_coco_images_and_annotations(images_1, images_2, annotations_1, annotations_2)
 
@@ -80,15 +82,18 @@ if __name__ == '__main__':
         "licenses": ""
     }
 
-    os.makedirs(args.output_dir)
-    os.makedirs(os.path.join(args.output_dir, "images"))
+    os.makedirs(args.output_dir, exist_ok=True)
+    os.makedirs(os.path.join(args.output_dir, "images"), exist_ok=True)
 
     with open(os.path.join(args.output_dir, args.output_coco_json), "w") as f:
         json.dump(combo_coco_json, f, indent=2)
 
-    for im in combo_images:
+    print("Combining image directories!")
+    for im in tqdm(combo_images):
         path1 = os.path.join(args.image_dir_1, im["file_name"])
         path2 = os.path.join(args.image_dir_2, im["file_name"])
         path = path1 if os.path.isfile(path1) else path2
         assert os.path.isfile(path)
+        if os.path.isfile(os.path.join(args.output_dir, "images", os.path.basename(path))):
+            continue
         shutil.copy(path, os.path.join(args.output_dir, "images"))
