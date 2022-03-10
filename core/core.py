@@ -11,7 +11,7 @@ class TextlineGenerator:
     def __init__(
             self, setname, font_paths, char_sets_and_props, save_path, 
             synth_transform, coverage_dict,
-            max_length, size, max_spaces, num_geom_p, max_numbers,
+            max_length, font_sizes, max_spaces, num_geom_p, max_numbers,
             language, vertical
         ):
 
@@ -22,8 +22,7 @@ class TextlineGenerator:
         self.synth_transform = synth_transform
         self.coverage_dict = coverage_dict
         self.max_length = max_length
-        self.size = size
-        self.font_size = size
+        self.font_sizes = [int(x) for x in font_sizes.split(",")]
         self.max_spaces = max_spaces
         self.num_geom_p = num_geom_p
         self.max_numbers = max_numbers
@@ -34,7 +33,8 @@ class TextlineGenerator:
     def select_font(self):
 
         font_path = np.random.choice(self.font_paths)
-        self.digital_font = ImageFont.truetype(font_path, size=self.size)
+        self.font_size = int(np.random.choice(self.font_sizes))
+        self.digital_font = ImageFont.truetype(font_path, size=self.font_size)
         self.covered_chars = set(self.coverage_dict[font_path])
 
     def generate_synthetic_textline_text(self):
@@ -59,10 +59,10 @@ class TextlineGenerator:
 
         return synth_text
 
-    def generate_synthetic_textline_image_latin_based(self, text, char_dist, char_dist_std=3):
+    def generate_synthetic_textline_image_latin_based(self, text, char_dist, char_dist_std=2):
 
-        W = sum(self.digital_font.getsize(c)[0] + char_dist for c in text)
-        H = self.font_size
+        W = sum(self.digital_font.getsize(c)[0] + char_dist for c in text) - (2*char_dist)
+        H = self.digital_font.getsize(text)[1]
         image = Image.new("RGB", (W, H), (255,255,255))
         draw = ImageDraw.Draw(image)
         x_pos, y_pos = 0, 0
@@ -88,7 +88,7 @@ class TextlineGenerator:
             
         return bboxes, image
     
-    def generate_synthetic_textline_image_character_based(self, text, char_dist, char_dist_std=3):
+    def generate_synthetic_textline_image_character_based(self, text, char_dist, char_dist_std=2):
 
         # create character renders
         char_renders = []

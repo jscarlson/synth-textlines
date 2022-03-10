@@ -33,8 +33,8 @@ if __name__ == '__main__':
         help="The maximum number of numbers to generate in a textline")
     parser.add_argument("--textline_numbers_geom_p", type=float, default=0.005,
         help="The p parameter in a geometric distribution, used for sampling numbers")
-    parser.add_argument("--textline_size", type=int, default=64,
-        help="The size of a textline's font")
+    parser.add_argument("--font_sizes", type=str, default="64",
+        help="The size of a textline's font as a comma separated list")
     parser.add_argument("--textline_max_length", type=int, default=20,
         help="The max number of characters in a textline")
     parser.add_argument("--textline_max_spaces", type=int, default=5,
@@ -44,6 +44,8 @@ if __name__ == '__main__':
         help="Option for transforming synthetically rendered textline")
     parser.add_argument('--vertical', action='store_true', default=False,
         help="Generate vertically oriented textlines")
+    parser.add_argument("--char_dist", type=int, default=10,
+        help="Distance between characters in pixels")
     args = parser.parse_args()
 
     # create transforms
@@ -92,7 +94,7 @@ if __name__ == '__main__':
         textline_generator = TextlineGenerator(
             setname, font_paths, char_sets_and_props, images_path, 
             synth_transform, coverage_dict,
-            args.textline_max_length, args.textline_size, args.textline_max_spaces,
+            args.textline_max_length, args.font_sizes, args.textline_max_spaces,
             args.textline_numbers_geom_p, args.textline_max_numbers,
             args.language, args.vertical
         )
@@ -100,20 +102,20 @@ if __name__ == '__main__':
         for image_id in tqdm(range(count)):
             
             bboxes, image_name, synth_image, synth_text = \
-                textline_generator.generate_synthetic_textline(char_dist=10, image_id=image_id)
+                textline_generator.generate_synthetic_textline(char_dist=args.char_dist, image_id=image_id)
 
             if all(c == "_" for c in synth_text):
                 continue
 
             imgw, imgh = synth_image.width, synth_image.height
-            image = {"width": imgw, "height": imgh, "id": image_id, "file_name": image_name}
+            image = {"width": imgw, "height": imgh, "id": image_id, 
+                "file_name": image_name, "text": synth_text.replace("_", " ")}
             images_dict[setname].append(image)
 
             for bbox in bboxes:
                 x, y, width, height = bbox
-                assert (x >= 0) and (y >= 0)
-                if (x + width > imgw): width = imgw - x - 1
-                if (y + height > imgh): height = imgh - y - 1
+                x0, y0, x1, y1 = max(x, 0), max(y, 0), min(x+width, imgw), min(y+height, imgh)
+                x, y, width, height = x0, y0, x1 - x0, y1 - y0
                 annotation = create_coco_annotation_field(anno_id, image_id, width, height, x, y)
                 anns_dict[setname].append(annotation)
                 anno_id += 1
