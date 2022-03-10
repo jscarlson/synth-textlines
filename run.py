@@ -121,9 +121,9 @@ if __name__ == '__main__':
                 anno_id += 1
 
     # output
-    for setname in SETNAMES:
+    for setname, pct in zip(SETNAMES, train_test_val_split):
         coco_json = COCO_JSON_SKELETON.copy()
         coco_json["images"] = images_dict[setname]
         coco_json["annotations"] = anns_dict[setname]
-        with open(os.path.join(outdir, f"synth_coco_{setname}.json"), 'w') as f:
+        with open(os.path.join(outdir, f"{setname}{int(pct*100)}.json"), 'w') as f:
             json.dump(coco_json, f, indent=2)
