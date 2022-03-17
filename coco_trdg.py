@@ -8,33 +8,7 @@ from tqdm import tqdm
 import shutil
 from glob import glob
 
-
-COCO_JSON_SKELETON = {
-    "info": {"":""}, 
-    "licenses": [{"":""}], 
-    "images": [], 
-    "annotations": [], 
-    "categories": [{"id": 0, "name": "char"}]
-}
-
-
-def create_coco_anno_entry(x, y, w, h, ann_id, image_id):
-    return {
-        "segmentation": [[int(x), int(y), int(x)+int(w), int(y), 
-                          int(x)+int(w), int(y)+int(h), int(x), int(y)+int(h)]], 
-        "area": int(w)*int(h), "iscrowd": 0, 
-        "image_id": image_id, "bbox": [int(x), int(y), int(w), int(h)], 
-        "category_id": 0, "id": ann_id, "score": 1.0
-    }
-
-
-def create_coco_image_entry(path, h, w, image_id):
-    return {
-        "file_name": path, 
-        "height": h, 
-        "width": w, 
-        "id": image_id
-    }
+from utils.coco import *
 
 
 if __name__ == "__main__":
