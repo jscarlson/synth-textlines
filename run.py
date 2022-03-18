@@ -46,6 +46,8 @@ if __name__ == '__main__':
         help="Generate vertically oriented textlines")
     parser.add_argument("--char_dist", type=int, default=10,
         help="Distance between characters in pixels")
+    parser.add_argument("--specific_seqs", type=str, default=None,
+        help="Assert specific character sequences appear in renders at random")
     args = parser.parse_args()
 
     # create transforms
@@ -96,7 +98,7 @@ if __name__ == '__main__':
             synth_transform, coverage_dict,
             args.textline_max_length, args.font_sizes, args.textline_max_spaces,
             args.textline_numbers_geom_p, args.textline_max_numbers,
-            args.language, args.vertical
+            args.language, args.vertical, args.specific_seqs
         )
 
         for image_id in tqdm(range(count)):

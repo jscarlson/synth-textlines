@@ -12,7 +12,7 @@ class TextlineGenerator:
             self, setname, font_paths, char_sets_and_props, save_path, 
             synth_transform, coverage_dict,
             max_length, font_sizes, max_spaces, num_geom_p, max_numbers,
-            language, vertical
+            language, vertical, spec_seqs
         ):
 
         self.setname = setname
@@ -29,6 +29,7 @@ class TextlineGenerator:
         self.low_chars = ",.ygjqp"
         self.language = language
         self.vertical = vertical
+        self.spec_seqs = spec_seqs.split(",") if not spec_seqs is None else None
 
     def select_font(self):
 
@@ -37,14 +38,15 @@ class TextlineGenerator:
         self.digital_font = ImageFont.truetype(font_path, size=self.font_size)
         self.covered_chars = set(self.coverage_dict[font_path])
 
-    def generate_synthetic_textline_text(self):
+    def generate_synthetic_textline_text(self, p_none=0.8):
 
         seq_chars = []
         num_chars = np.random.choice(range(1, self.max_length))
         for char_set, prop in self.char_sets_and_props:
             char_set_count = round(prop * num_chars)
             available_chars = self.covered_chars.intersection(set(char_set))
-            seq_chars.extend(np.random.choice(list(available_chars), char_set_count))
+            chosen_chars = np.random.choice(list(available_chars), char_set_count)
+            seq_chars.extend(chosen_chars)
         
         num_spaces = np.random.choice(range(0, self.max_spaces))
         seq_spaces = num_spaces * ["_"]
@@ -53,6 +55,13 @@ class TextlineGenerator:
         seq_numbers = np.random.geometric(p=self.num_geom_p, size=num_numbers)
 
         synth_seq = to_string_list(seq_numbers) + to_string_list(seq_spaces) + to_string_list(seq_chars)
+
+        if not self.spec_seqs is None:
+            seq_spec = np.random.choice(self.spec_seqs)
+            seq_spec = np.random.choice([seq_spec, None], p=[1-p_none, p_none])
+            if not seq_spec is None:
+                synth_seq += [seq_spec]
+
         np.random.shuffle(synth_seq)
         synth_text = "".join(synth_seq)
         self.num_symbols = len(synth_text)
