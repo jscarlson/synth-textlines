@@ -44,7 +44,9 @@ if __name__ == '__main__':
         help="Option for transforming synthetically rendered textline")
     parser.add_argument('--vertical', action='store_true', default=False,
         help="Generate vertically oriented textlines")
-    parser.add_argument("--char_dist", type=int, default=10,
+    parser.add_argument("--char_dist", type=int, default=0,
+        help="Distance between characters in pixels")
+    parser.add_argument("--char_dist_std", type=int, default=2,
         help="Distance between characters in pixels")
     parser.add_argument("--specific_seqs", type=str, default=None,
         help="Assert specific character sequences appear in renders at random")
@@ -98,13 +100,14 @@ if __name__ == '__main__':
             synth_transform, coverage_dict,
             args.textline_max_length, args.font_sizes, args.textline_max_spaces,
             args.textline_numbers_geom_p, args.textline_max_numbers,
-            args.language, args.vertical, args.specific_seqs
+            args.language, args.vertical, args.specific_seqs,
+            args.char_dist, args.char_dist_std
         )
 
         for image_id in tqdm(range(count)):
             
             bboxes, image_name, synth_image, synth_text = \
-                textline_generator.generate_synthetic_textline(char_dist=args.char_dist, image_id=image_id)
+                textline_generator.generate_synthetic_textline(image_id=image_id)
 
             if all(c == "_" for c in synth_text):
                 continue

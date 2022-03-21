@@ -12,7 +12,7 @@ class TextlineGenerator:
             self, setname, font_paths, char_sets_and_props, save_path, 
             synth_transform, coverage_dict,
             max_length, font_sizes, max_spaces, num_geom_p, max_numbers,
-            language, vertical, spec_seqs
+            language, vertical, spec_seqs, char_dist, char_dist_std
         ):
 
         self.setname = setname
@@ -30,6 +30,8 @@ class TextlineGenerator:
         self.language = language
         self.vertical = vertical
         self.spec_seqs = spec_seqs.split(",") if not spec_seqs is None else None
+        self.char_dist = char_dist
+        self.char_dist_std = char_dist_std
 
     def select_font(self):
 
@@ -68,9 +70,9 @@ class TextlineGenerator:
 
         return synth_text
 
-    def generate_synthetic_textline_image_latin_based(self, text, char_dist, char_dist_std=2):
+    def generate_synthetic_textline_image_latin_based(self, text):
 
-        W = sum(self.digital_font.getsize(c)[0] + char_dist for c in text) - (2*char_dist)
+        W = sum(self.digital_font.getsize(c)[0] + self.char_dist for c in text) - (2 * self.char_dist)
         H = self.digital_font.getsize(text)[1]
         image = Image.new("RGB", (W, H), (255,255,255))
         draw = ImageDraw.Draw(image)
@@ -92,12 +94,12 @@ class TextlineGenerator:
             bboxes.append(bbox)
 
             draw.text((x_pos, y_pos), c, font=self.digital_font, fill=1)
-            x_jiggle = min(char_dist, abs(np.random.normal(0, char_dist_std)))
-            x_pos += w + int(char_dist - x_jiggle)
+            x_jiggle = min(self.char_dist, abs(np.random.normal(0, self.char_dist_std)))
+            x_pos += w + int(self.char_dist - x_jiggle)
             
         return bboxes, image
     
-    def generate_synthetic_textline_image_character_based(self, text, char_dist, char_dist_std=2):
+    def generate_synthetic_textline_image_character_based(self, text):
 
         # create character renders
         char_renders = []
@@ -118,18 +120,18 @@ class TextlineGenerator:
         # create canvas
         if not self.vertical:
             total_width = sum(cr.width for cr in char_renders)
-            canvas_w = int((char_dist * (self.num_symbols + 1)) + total_width)
+            canvas_w = int((self.char_dist * (self.num_symbols + 1)) + total_width)
             canvas_h = int(self.font_size) 
             canvas = Image.new('RGB', (canvas_w, canvas_h), (255, 255, 255))
         else:
             total_height = sum(cr.height for cr in char_renders)
-            canvas_h = int((char_dist * (self.num_symbols + 1)) + total_height)
+            canvas_h = int((self.char_dist * (self.num_symbols + 1)) + total_height)
             canvas_w = int(self.font_size) 
             canvas = Image.new('RGB', (canvas_w, canvas_h), (255, 255, 255))
         
         # pasting
         bboxes = []
-        x = char_dist
+        x = self.char_dist
         for i in range(self.num_symbols):
 
             # get render
@@ -151,7 +153,7 @@ class TextlineGenerator:
                 if height_diff < 0: height_diff = 0
                 y = height_diff // 2
                 if curr_text in self.low_chars:
-                    y = canvas_h - h - char_dist
+                    y = canvas_h - h - self.char_dist
             else:
                 width_diff = canvas_w - w
                 if width_diff < 0: width_diff = 0
@@ -162,22 +164,22 @@ class TextlineGenerator:
             bboxes.append((x, y, w, h))
 
             # move x position along
-            jiggle = min(char_dist, abs(np.random.normal(0, char_dist_std)))
+            jiggle = min(self.char_dist, abs(np.random.normal(0, self.char_dist_std)))
             if not self.vertical:                
-                x += w + int(char_dist - jiggle)
+                x += w + int(self.char_dist - jiggle)
             else:
-                y += h + int(char_dist - jiggle)
+                y += h + int(self.char_dist - jiggle)
         
         return bboxes, canvas
 
-    def generate_synthetic_textline(self, char_dist, image_id):
+    def generate_synthetic_textline(self, image_id):
 
         self.select_font()
         textline_text = self.generate_synthetic_textline_text()
         if self.language == "jp":
-            bboxes, canvas = self.generate_synthetic_textline_image_character_based(textline_text, char_dist)
+            bboxes, canvas = self.generate_synthetic_textline_image_character_based(textline_text)
         elif self.language == "en":
-            bboxes, canvas = self.generate_synthetic_textline_image_latin_based(textline_text, char_dist)
+            bboxes, canvas = self.generate_synthetic_textline_image_latin_based(textline_text)
         out_image = self.synth_transform(canvas)
         image_name = f"{self.setname}_{image_id}.png"
         out_image.save(os.path.join(self.save_path, image_name))
