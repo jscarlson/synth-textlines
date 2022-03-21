@@ -8,7 +8,7 @@ TRANSFORM_DICT = {
             T.ToTensor(),
             T.RandomApply([color_shift], p=0.25),
             T.RandomApply([T.ColorJitter(brightness=0.5, contrast=0.3, saturation=0.3, hue=0.3)], p=0.5),
-            T.RandomApply([T.GaussianBlur(11)], p=0.35),
+            T.RandomApply([T.GaussianBlur(21, sigma=(1, 4))], p=0.35),
             T.RandomInvert(p=0.2),
             T.RandomGrayscale(p=0.2),
             T.ToPILImage()
