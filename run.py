@@ -50,6 +50,8 @@ if __name__ == '__main__':
         help="Distance between characters in pixels")
     parser.add_argument("--specific_seqs", type=str, default=None,
         help="Assert specific character sequences appear in renders at random")
+    parser.add_argument("--p_spec_seqs", type=float, default=0.2,
+        help="The probability a specific sequence is included in a generated textline")
     args = parser.parse_args()
 
     # create transforms
@@ -101,7 +103,7 @@ if __name__ == '__main__':
             args.textline_max_length, args.font_sizes, args.textline_max_spaces,
             args.textline_numbers_geom_p, args.textline_max_numbers,
             args.language, args.vertical, args.specific_seqs,
-            args.char_dist, args.char_dist_std
+            args.char_dist, args.char_dist_std, args.p_spec_seqs
         )
 
         for image_id in tqdm(range(count)):

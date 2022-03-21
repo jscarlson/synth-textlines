@@ -12,7 +12,8 @@ class TextlineGenerator:
             self, setname, font_paths, char_sets_and_props, save_path, 
             synth_transform, coverage_dict,
             max_length, font_sizes, max_spaces, num_geom_p, max_numbers,
-            language, vertical, spec_seqs, char_dist, char_dist_std
+            language, vertical, spec_seqs, char_dist, char_dist_std,
+            p_specseq
         ):
 
         self.setname = setname
@@ -32,6 +33,7 @@ class TextlineGenerator:
         self.spec_seqs = spec_seqs.split(",") if not spec_seqs is None else None
         self.char_dist = char_dist
         self.char_dist_std = char_dist_std
+        self.p_none = 1-p_specseq
 
     def select_font(self):
 
@@ -40,7 +42,7 @@ class TextlineGenerator:
         self.digital_font = ImageFont.truetype(font_path, size=self.font_size)
         self.covered_chars = set(self.coverage_dict[font_path])
 
-    def generate_synthetic_textline_text(self, p_none=0.8):
+    def generate_synthetic_textline_text(self):
 
         seq_chars = []
         num_chars = np.random.choice(range(1, self.max_length))
@@ -60,7 +62,7 @@ class TextlineGenerator:
 
         if not self.spec_seqs is None:
             seq_spec = np.random.choice(self.spec_seqs)
-            seq_spec = np.random.choice([seq_spec, None], p=[1-p_none, p_none])
+            seq_spec = np.random.choice([seq_spec, None], p=[1-self.p_none, self.p_none])
             if not seq_spec is None:
                 synth_seq += [seq_spec]
 
