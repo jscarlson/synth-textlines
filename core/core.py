@@ -133,7 +133,11 @@ class TextlineGenerator:
         
         # pasting
         bboxes = []
-        x = self.char_dist
+        if self.vertical:
+            y = self.char_dist
+        else:
+            x = self.char_dist
+        
         for i in range(self.num_symbols):
 
             # get render
