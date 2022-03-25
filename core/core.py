@@ -1,3 +1,4 @@
+from cProfile import run
 from numpy.lib.function_base import kaiser
 import numpy as np
 from PIL import ImageOps, Image, ImageFont, ImageDraw
@@ -13,7 +14,7 @@ class TextlineGenerator:
             synth_transform, coverage_dict,
             max_length, font_sizes, max_spaces, num_geom_p, max_numbers,
             language, vertical, spec_seqs, char_dist, char_dist_std,
-            p_specseq
+            p_specseq, word_bbox
         ):
 
         self.setname = setname
@@ -34,6 +35,7 @@ class TextlineGenerator:
         self.char_dist = char_dist
         self.char_dist_std = char_dist_std
         self.p_none = 1-p_specseq
+        self.word_bbox = word_bbox
 
     def select_font(self):
 
@@ -80,6 +82,11 @@ class TextlineGenerator:
         draw = ImageDraw.Draw(image)
         x_pos, y_pos = 0, 0
         bboxes = []
+        if self.word_bbox:
+            word_bboxes = []
+            last_word_first_char = 0
+            last_word_first_x = 0
+            running_word_len = 0
         
         for i, c in enumerate(text):
 
@@ -88,8 +95,18 @@ class TextlineGenerator:
             bottom_2 = self.digital_font.getsize(text[:i+1])[1]
             bottom = bottom_1 if bottom_1 < bottom_2 else bottom_2
 
+            if self.word_bbox and c == "_" and text[i-1] != "_" and i != 0:
+                ww, wh = self.digital_font.getmask(text[last_word_first_char:i]).size
+                word_bottom = self.digital_font.getsize(text[last_word_first_char:i])[1]
+                last_word_first_char = i + 1
+                wbbx = (last_word_first_x, max(word_bottom - wh, 0), running_word_len, wh)
+                last_word_first_x += running_word_len
+                running_word_len = 0
+                word_bboxes.append(wbbx)
+
             if c == "_":
                 x_pos += w
+                if self.word_bbox: last_word_first_x += w
                 continue
 
             bbox = (x_pos, max(bottom - h, 0), w, h)
@@ -98,8 +115,17 @@ class TextlineGenerator:
             draw.text((x_pos, y_pos), c, font=self.digital_font, fill=1)
             x_jiggle = min(self.char_dist, abs(np.random.normal(0, self.char_dist_std)))
             x_pos += w + int(self.char_dist - x_jiggle)
-            
-        return bboxes, image
+            running_word_len += w + int(self.char_dist - x_jiggle)
+        
+        if self.word_bbox:
+            if text[i] != "_":
+                ww, wh = self.digital_font.getmask(text[last_word_first_char:]).size
+                word_bottom = self.digital_font.getsize(text[last_word_first_char:])[1]
+                wbbx = (last_word_first_x, max(word_bottom - wh, 0), running_word_len, wh)
+                word_bboxes.append(wbbx)
+            return bboxes, word_bboxes, image
+        else:
+            return bboxes, image
     
     def generate_synthetic_textline_image_character_based(self, text):
 
@@ -182,12 +208,20 @@ class TextlineGenerator:
 
         self.select_font()
         textline_text = self.generate_synthetic_textline_text()
+
         if self.language == "jp":
             bboxes, canvas = self.generate_synthetic_textline_image_character_based(textline_text)
         elif self.language == "en":
-            bboxes, canvas = self.generate_synthetic_textline_image_latin_based(textline_text)
+            if self.word_bbox:
+                bboxes, word_bboxes, canvas = self.generate_synthetic_textline_image_latin_based(textline_text)
+            else:
+                bboxes, canvas = self.generate_synthetic_textline_image_latin_based(textline_text)
+
         out_image = self.synth_transform(canvas)
         image_name = f"{self.setname}_{image_id}.png"
         out_image.save(os.path.join(self.save_path, image_name))
 
-        return bboxes, image_name, out_image, textline_text
+        if self.word_bbox:
+            return bboxes, word_bboxes, image_name, out_image, textline_text
+        else:
+            return bboxes, image_name, out_image, textline_text

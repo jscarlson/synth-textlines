@@ -52,6 +52,8 @@ if __name__ == '__main__':
         help="Assert specific character sequences appear in renders at random")
     parser.add_argument("--p_spec_seqs", type=float, default=0.2,
         help="The probability a specific sequence is included in a generated textline")
+    parser.add_argument('--word_bbox', action='store_true', default=False,
+        help="Create bboxes for words too")
     args = parser.parse_args()
 
     # create transforms
@@ -103,13 +105,18 @@ if __name__ == '__main__':
             args.textline_max_length, args.font_sizes, args.textline_max_spaces,
             args.textline_numbers_geom_p, args.textline_max_numbers,
             args.language, args.vertical, args.specific_seqs,
-            args.char_dist, args.char_dist_std, args.p_spec_seqs
+            args.char_dist, args.char_dist_std, args.p_spec_seqs,
+            args.word_bbox
         )
 
         for image_id in tqdm(range(count)):
             
-            bboxes, image_name, synth_image, synth_text = \
-                textline_generator.generate_synthetic_textline(image_id=image_id)
+            if args.word_bbox:
+                bboxes, word_bboxes, image_name, synth_image, synth_text = \
+                    textline_generator.generate_synthetic_textline(image_id=image_id)
+            else:
+                bboxes, image_name, synth_image, synth_text = \
+                    textline_generator.generate_synthetic_textline(image_id=image_id)
 
             if all(c == "_" for c in synth_text):
                 continue
@@ -123,7 +130,15 @@ if __name__ == '__main__':
                 x, y, width, height = bbox
                 x0, y0, x1, y1 = max(x, 0), max(y, 0), min(x+width, imgw), min(y+height, imgh)
                 x, y, width, height = x0, y0, x1 - x0, y1 - y0
-                annotation = create_coco_annotation_field(anno_id, image_id, width, height, x, y)
+                annotation = create_coco_annotation_field(anno_id, image_id, width, height, x, y, cat_id=0)
+                anns_dict[setname].append(annotation)
+                anno_id += 1
+
+            for bbox in word_bboxes:
+                x, y, width, height = bbox
+                x0, y0, x1, y1 = max(x, 0), max(y, 0), min(x+width, imgw), min(y+height, imgh)
+                x, y, width, height = x0, y0, x1 - x0, y1 - y0
+                annotation = create_coco_annotation_field(anno_id, image_id, width, height, x, y, cat_id=1)
                 anns_dict[setname].append(annotation)
                 anno_id += 1
 

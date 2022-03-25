@@ -4,16 +4,16 @@ COCO_JSON_SKELETON = {
         "images": [],
         "annotations": [],
         "info": {"year": 2022, "version": "1.0", "contributor": "synth-textlines"},
-        "categories": [{"id": 0, "name": "character"}],
+        "categories": [{"id": 0, "name": "character"}, {"id": 1, "name": "word"}],
         "licenses": ""
     }
 
 
-def create_coco_annotation_field(anno_id, image_id, width, height, x, y):
+def create_coco_annotation_field(anno_id, image_id, width, height, x, y, cat_id):
     return {
         "id": anno_id, 
         "image_id": image_id, 
-        "category_id": 0,
+        "category_id": cat_id,
         "area": int(width*height), 
         "bbox": [int(x), int(y), int(width), int(height)],
         "segmentation": [[int(x), int(y), int(x)+int(width), int(y), 
