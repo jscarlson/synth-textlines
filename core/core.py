@@ -37,7 +37,7 @@ class TextlineGenerator:
         self.char_dist_std = char_dist_std
         self.p_specseq = [float(x) for x in p_specseq.split(",")]
         assert len(self.p_specseq) == len(self.spec_seqs)
-        assert 0.9999 < sum(self.p_specseq) <= 1, "Probs of spec seqs do not add to 1!"
+        assert 0.9999 < sum(self.p_specseq) <= 1, f"Probs of spec seqs do not add to 1! ({sum(self.p_specseq)})"
         self.word_bbox = word_bbox
         if real_words > 0:
             assert os.name == "posix", "Not a unix OS; adding in real words won't work!"
