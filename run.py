@@ -49,11 +49,13 @@ if __name__ == '__main__':
     parser.add_argument("--char_dist_std", type=int, default=2,
         help="Distance between characters in pixels")
     parser.add_argument("--specific_seqs", type=str, default=None,
-        help="Assert specific character sequences appear in renders at random")
-    parser.add_argument("--p_spec_seqs", type=float, default=0.2,
-        help="The probability a specific sequence is included in a generated textline")
+        help="Assert specific character sequences appear in renders at random, separated by pipes")
+    parser.add_argument("--p_spec_seqs", type=str, default=None,
+        help="The probability each specific sequence is included in a generated textline")
     parser.add_argument('--word_bbox', action='store_true', default=False,
         help="Create bboxes for words too")
+    parser.add_argument('--real_words', type=int, default=0,
+        help="Number of real words to insert in generated textlines")
     args = parser.parse_args()
 
     # create transforms
@@ -106,7 +108,7 @@ if __name__ == '__main__':
             args.textline_numbers_geom_p, args.textline_max_numbers,
             args.language, args.vertical, args.specific_seqs,
             args.char_dist, args.char_dist_std, args.p_spec_seqs,
-            args.word_bbox
+            args.word_bbox, args.real_words
         )
 
         for image_id in tqdm(range(count)):

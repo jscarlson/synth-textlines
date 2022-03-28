@@ -3,6 +3,7 @@ from numpy.lib.function_base import kaiser
 import numpy as np
 from PIL import ImageOps, Image, ImageFont, ImageDraw
 import os
+import re
 
 from utils.misc import to_string_list
 
@@ -14,7 +15,7 @@ class TextlineGenerator:
             synth_transform, coverage_dict,
             max_length, font_sizes, max_spaces, num_geom_p, max_numbers,
             language, vertical, spec_seqs, char_dist, char_dist_std,
-            p_specseq, word_bbox
+            p_specseq, word_bbox, real_words
         ):
 
         self.setname = setname
@@ -31,11 +32,19 @@ class TextlineGenerator:
         self.low_chars = ",.ygjqp"
         self.language = language
         self.vertical = vertical
-        self.spec_seqs = spec_seqs.split(",") if not spec_seqs is None else None
+        self.spec_seqs = spec_seqs.split("|") if not spec_seqs is None else None
         self.char_dist = char_dist
         self.char_dist_std = char_dist_std
-        self.p_none = 1-p_specseq
+        self.p_specseq = [float(x) for x in p_specseq.split(",")]
+        assert len(self.p_specseq) == len(self.spec_seqs)
+        assert 0.9999 < sum(self.p_specseq) <= 1, "Probs of spec seqs do not add to 1!"
         self.word_bbox = word_bbox
+        if real_words > 0:
+            assert os.name == "posix", "Not a unix OS; adding in real words won't work!"
+            with open("/usr/share/dict/words", "r") as f:
+                words = re.sub("[^\w]", " ",  f.read()).split()
+        self.words = words
+        self.num_real_words = real_words
 
     def select_font(self):
 
@@ -63,13 +72,17 @@ class TextlineGenerator:
         synth_seq = to_string_list(seq_numbers) + to_string_list(seq_spaces) + to_string_list(seq_chars)
 
         if not self.spec_seqs is None:
-            seq_spec = np.random.choice(self.spec_seqs)
-            seq_spec = np.random.choice([seq_spec, None], p=[1-self.p_none, self.p_none])
-            if not seq_spec is None:
-                synth_seq += [seq_spec]
+            seq_spec = np.random.choice(self.spec_seqs, p=self.p_specseq)
+            synth_seq += [seq_spec]
+
+        if self.num_real_words > 0:
+            random_words = np.random.choice(self.words, self.num_real_words).tolist()
+            synth_seq += [f"_{w}_" for w in random_words]
+            synth_seq
 
         np.random.shuffle(synth_seq)
         synth_text = "".join(synth_seq)
+        synth_text = synth_text.replace("__", "_")
         self.num_symbols = len(synth_text)
 
         return synth_text
