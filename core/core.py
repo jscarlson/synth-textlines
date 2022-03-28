@@ -5,7 +5,7 @@ from PIL import ImageOps, Image, ImageFont, ImageDraw
 import os
 import re
 
-from utils.misc import to_string_list
+from utils.misc import *
 
 
 class TextlineGenerator:
@@ -95,11 +95,12 @@ class TextlineGenerator:
         draw = ImageDraw.Draw(image)
         x_pos, y_pos = 0, 0
         bboxes = []
+
         if self.word_bbox:
             word_bboxes = []
-            last_word_first_char = 0
-            last_word_first_x = 0
+            next_word_first_char = 0
             running_word_len = 0
+            next_word_start_x = x_pos
         
         for i, c in enumerate(text):
 
@@ -107,34 +108,39 @@ class TextlineGenerator:
             bottom_1 = self.digital_font.getsize(c)[1]
             bottom_2 = self.digital_font.getsize(text[:i+1])[1]
             bottom = bottom_1 if bottom_1 < bottom_2 else bottom_2
+            x_jiggle = np.random.normal(self.char_dist, self.char_dist_std)
+            offset = int(self.char_dist + x_jiggle)
 
-            if self.word_bbox and c == "_" and text[i-1] != "_" and i != 0:
-                ww, wh = self.digital_font.getmask(text[last_word_first_char:i]).size
-                word_bottom = self.digital_font.getsize(text[last_word_first_char:i])[1]
-                last_word_first_char = i + 1
-                wbbx = (last_word_first_x, max(word_bottom - wh, 0), running_word_len, wh)
-                last_word_first_x += running_word_len
-                running_word_len = 0
-                word_bboxes.append(wbbx)
+            if c != "_":
 
-            if c == "_":
-                x_pos += w
-                if self.word_bbox: last_word_first_x += w
-                continue
+                bbox = (x_pos, max(bottom - h, 0), w, h)
+                bboxes.append(bbox)
+                draw.text((x_pos, y_pos), c, font=self.digital_font, fill=1)
+                x_pos += w + offset
+                if safe_list_get(text, i+1, False) == "_" or i == len(text) - 1:
+                    running_word_len += w
+                else:
+                    running_word_len += w + offset
+                
+            else:
 
-            bbox = (x_pos, max(bottom - h, 0), w, h)
-            bboxes.append(bbox)
-
-            draw.text((x_pos, y_pos), c, font=self.digital_font, fill=1)
-            x_jiggle = min(self.char_dist, abs(np.random.normal(0, self.char_dist_std)))
-            x_pos += w + int(self.char_dist - x_jiggle)
-            running_word_len += w + int(self.char_dist - x_jiggle)
-        
+                x_pos += w + offset
+                if i == 0 and self.word_bbox:
+                    next_word_start_x = x_pos
+                if i != 0 and self.word_bbox:
+                    _, wh = self.digital_font.getmask(text[next_word_first_char:i]).size
+                    word_bottom = self.digital_font.getsize(text[next_word_first_char:i])[1]
+                    next_word_first_char = i + 1
+                    wbbx = (next_word_start_x, max(word_bottom - wh, 0), running_word_len, wh)
+                    running_word_len = 0
+                    next_word_start_x = x_pos
+                    word_bboxes.append(wbbx)
+                
         if self.word_bbox:
             if text[i] != "_":
-                ww, wh = self.digital_font.getmask(text[last_word_first_char:]).size
-                word_bottom = self.digital_font.getsize(text[last_word_first_char:])[1]
-                wbbx = (last_word_first_x, max(word_bottom - wh, 0), running_word_len, wh)
+                _, wh = self.digital_font.getmask(text[next_word_first_char:]).size
+                word_bottom = self.digital_font.getsize(text[next_word_first_char:])[1]
+                wbbx = (next_word_start_x, max(word_bottom - wh, 0), running_word_len, wh)
                 word_bboxes.append(wbbx)
             return bboxes, word_bboxes, image
         else:
