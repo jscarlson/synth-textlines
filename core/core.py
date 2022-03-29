@@ -15,7 +15,7 @@ class TextlineGenerator:
             synth_transform, coverage_dict,
             max_length, font_sizes, max_spaces, num_geom_p, max_numbers,
             language, vertical, spec_seqs, char_dist, char_dist_std,
-            p_specseq, word_bbox, real_words
+            p_specseq, word_bbox, real_words, single_words
         ):
 
         self.setname = setname
@@ -39,12 +39,13 @@ class TextlineGenerator:
         assert len(self.p_specseq) == len(self.spec_seqs)
         assert round(sum(self.p_specseq), 4) == 1., f"Probs of spec seqs do not add to 1! ({sum(self.p_specseq)})"
         self.word_bbox = word_bbox
-        if real_words > 0:
+        if real_words > 0 or single_words:
             assert os.name == "posix", "Not a unix OS; adding in real words won't work!"
             with open("/usr/share/dict/words", "r") as f:
                 words = re.sub("[^\w]", " ",  f.read()).split()
         self.words = words
         self.num_real_words = real_words
+        self.single_words = single_words
 
     def select_font(self):
 
@@ -83,6 +84,32 @@ class TextlineGenerator:
         np.random.shuffle(synth_seq)
         synth_text = "".join(synth_seq)
         synth_text = synth_text.replace("__", "_")
+        self.num_symbols = len(synth_text)
+
+        return synth_text
+
+    def generate_synthetic_word_text(self):
+
+        random_word = np.random.choice(self.words)
+
+        random_chars = ""
+        num_chars = np.random.choice(range(1, self.max_length))
+        for char_set, prop in self.char_sets_and_props:
+            char_set_count = round(prop * num_chars)
+            available_chars = self.covered_chars.intersection(set(char_set))
+            chosen_chars = np.random.choice(list(available_chars), char_set_count)
+            random_chars += "".join(chosen_chars.tolist())
+        np.random.shuffle(random_chars)
+
+        if not self.spec_seqs is None:
+            seq_spec = np.random.choice(self.spec_seqs, p=self.p_specseq)
+
+        synth_text = np.random.choice([
+            random_chars + seq_spec, 
+            seq_spec + random_chars, 
+            random_word + seq_spec, 
+            seq_spec + random_word
+        ])
         self.num_symbols = len(synth_text)
 
         return synth_text
@@ -142,9 +169,9 @@ class TextlineGenerator:
                 word_bottom = self.digital_font.getsize(text[next_word_first_char:])[1]
                 wbbx = (next_word_start_x, max(word_bottom - wh, 0), running_word_len, wh)
                 word_bboxes.append(wbbx)
-            return bboxes, word_bboxes, image
+            return {"bboxes": bboxes, "word_bboxes": word_bboxes, "image": image}
         else:
-            return bboxes, image
+            return {"bboxes": bboxes, "image": image}
     
     def generate_synthetic_textline_image_character_based(self, text):
 
@@ -221,26 +248,27 @@ class TextlineGenerator:
             else:
                 y += h + int(self.char_dist - jiggle)
         
-        return bboxes, canvas
+        return {"bboxes": bboxes, "image": canvas}
 
     def generate_synthetic_textline(self, image_id):
 
         self.select_font()
-        textline_text = self.generate_synthetic_textline_text()
+        if self.single_words:
+            textline_text = self.generate_synthetic_word_text()
+        else:
+            textline_text = self.generate_synthetic_textline_text()
 
         if self.language == "jp":
-            bboxes, canvas = self.generate_synthetic_textline_image_character_based(textline_text)
+            out_dict = self.generate_synthetic_textline_image_character_based(textline_text)
         elif self.language == "en":
-            if self.word_bbox:
-                bboxes, word_bboxes, canvas = self.generate_synthetic_textline_image_latin_based(textline_text)
-            else:
-                bboxes, canvas = self.generate_synthetic_textline_image_latin_based(textline_text)
-
-        out_image = self.synth_transform(canvas)
+            out_dict = self.generate_synthetic_textline_image_latin_based(textline_text)
+            
+        out_image = self.synth_transform(out_dict["image"])
         image_name = f"{self.setname}_{image_id}.png"
+        out_dict["trans_image"] = out_image
+        out_dict["image_name"] = image_name
+        out_dict["text"] = textline_text
+        
         out_image.save(os.path.join(self.save_path, image_name))
 
-        if self.word_bbox:
-            return bboxes, word_bboxes, image_name, out_image, textline_text
-        else:
-            return bboxes, image_name, out_image, textline_text
+        return out_dict

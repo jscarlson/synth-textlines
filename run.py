@@ -1,4 +1,5 @@
 import os
+from matplotlib.pyplot import text
 from tqdm import tqdm
 import json
 import argparse
@@ -54,6 +55,8 @@ if __name__ == '__main__':
         help="The probability each specific sequence is included in a generated textline")
     parser.add_argument('--word_bbox', action='store_true', default=False,
         help="Create bboxes for words too")
+    parser.add_argument('--single_words', action='store_true', default=False,
+        help="Generate images of single words or random character strings")
     parser.add_argument('--real_words', type=int, default=0,
         help="Number of real words to insert in generated textlines")
     args = parser.parse_args()
@@ -108,17 +111,16 @@ if __name__ == '__main__':
             args.textline_numbers_geom_p, args.textline_max_numbers,
             args.language, args.vertical, args.specific_seqs,
             args.char_dist, args.char_dist_std, args.p_spec_seqs,
-            args.word_bbox, args.real_words
+            args.word_bbox, args.real_words, args.single_words
         )
 
         for image_id in tqdm(range(count)):
-            
-            if args.word_bbox:
-                bboxes, word_bboxes, image_name, synth_image, synth_text = \
-                    textline_generator.generate_synthetic_textline(image_id=image_id)
-            else:
-                bboxes, image_name, synth_image, synth_text = \
-                    textline_generator.generate_synthetic_textline(image_id=image_id)
+
+            textline_dict = textline_generator.generate_synthetic_textline(image_id=image_id)
+
+            synth_text = textline_dict["text"]
+            synth_image = textline_dict["trans_image"]
+            image_name = textline_dict["image_name"]
 
             if all(c == "_" for c in synth_text):
                 continue
@@ -128,7 +130,7 @@ if __name__ == '__main__':
                 "file_name": image_name, "text": synth_text.replace("_", " ")}
             images_dict[setname].append(image)
 
-            for bbox in bboxes:
+            for bbox in textline_dict.get("bboxes", list()):
                 x, y, width, height = bbox
                 x0, y0, x1, y1 = max(x, 0), max(y, 0), min(x+width, imgw), min(y+height, imgh)
                 x, y, width, height = x0, y0, x1 - x0, y1 - y0
@@ -136,7 +138,7 @@ if __name__ == '__main__':
                 anns_dict[setname].append(annotation)
                 anno_id += 1
 
-            for bbox in word_bboxes:
+            for bbox in textline_dict.get("word_bboxes", list()):
                 x, y, width, height = bbox
                 x0, y0, x1, y1 = max(x, 0), max(y, 0), min(x+width, imgw), min(y+height, imgh)
                 x, y, width, height = x0, y0, x1 - x0, y1 - y0
