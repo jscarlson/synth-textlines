@@ -92,14 +92,15 @@ class TextlineGenerator:
 
         random_word = np.random.choice(self.words)
 
-        random_chars = ""
+        random_chars = []
         num_chars = np.random.choice(range(1, self.max_length))
         for char_set, prop in self.char_sets_and_props:
             char_set_count = round(prop * num_chars)
             available_chars = self.covered_chars.intersection(set(char_set))
             chosen_chars = np.random.choice(list(available_chars), char_set_count)
-            random_chars += "".join(chosen_chars.tolist())
+            random_chars.extend(chosen_chars)
         np.random.shuffle(random_chars)
+        random_chars = "".join(random_chars)
 
         if not self.spec_seqs is None:
             seq_spec = np.random.choice(self.spec_seqs, p=self.p_specseq)
