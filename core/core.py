@@ -83,7 +83,7 @@ class TextlineGenerator:
 
         np.random.shuffle(synth_seq)
         synth_text = "".join(synth_seq)
-        synth_text = synth_text.replace("__", "_")
+        synth_text = re.sub("_+",  "_", synth_text)
         self.num_symbols = len(synth_text)
 
         return synth_text
