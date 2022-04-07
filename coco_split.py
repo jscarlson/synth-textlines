@@ -43,7 +43,9 @@ if __name__ == '__main__':
     test_coco_json["images"] = test_images
     test_coco_json["annotations"] = test_annotations
 
-    with open(os.path.join(os.path.dirname(args.input_coco_json), f"train{int(100*args.train_pct)}.json"), "w") as f:
+    input_basename, _ = os.path.splitext(os.path.basename(args.input_coco_json))
+
+    with open(os.path.join(os.path.dirname(args.input_coco_json), input_basename.replace("all", f"train{int(100*args.train_pct)}") + ".json"), "w") as f:
         json.dump(train_coco_json, f, indent=2)
-    with open(os.path.join(os.path.dirname(args.input_coco_json), f"test{100-int(100*args.train_pct)}.json"), "w") as f:
+    with open(os.path.join(os.path.dirname(args.input_coco_json), input_basename.replace("all", f"test{100-int(100*args.train_pct)}") + ".json"), "w") as f:
         json.dump(test_coco_json, f, indent=2)
