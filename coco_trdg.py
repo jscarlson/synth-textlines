@@ -9,6 +9,7 @@ import shutil
 from glob import glob
 
 from utils.coco import *
+from utils.transforms import *
 
 
 if __name__ == "__main__":
@@ -44,7 +45,7 @@ if __name__ == "__main__":
             "-l", "en", 
             "-c", args.count, 
             "--length", args.max_words, 
-            "--random", 
+            "--random",
             "-f", size, 
             "--output_bboxes", "2", 
             "-na", "2", 
@@ -80,6 +81,9 @@ if __name__ == "__main__":
     images_dir = os.path.join(args.save_dir, "images")
     os.makedirs(images_dir)
 
+    trdg_transform = TRANSFORM_DICT["trdg"]
+
     for trdg_dir in tqdm(trdg_dirs):
         for path in glob(f"{trdg_dir}/*.jpg"):
-            shutil.copyfile(path, os.path.join(images_dir, f"{os.path.basename(trdg_dir)}_{os.path.basename(path)}"))
+            img_tr = trdg_transform(Image.open(path))
+            img_tr.save(os.path.join(images_dir, f"{os.path.basename(trdg_dir)}_{os.path.basename(path)}"))

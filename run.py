@@ -41,7 +41,7 @@ if __name__ == '__main__':
     parser.add_argument("--textline_max_spaces", type=int, default=5,
         help="The max number of spaces in a textline")
     parser.add_argument('--transforms',
-        choices=['default', 'pr', 'album'], type=str, default="default",
+        choices=['default', 'pr', 'album', 'trdg'], type=str, default="default",
         help="Option for transforming synthetically rendered textline")
     parser.add_argument('--vertical', action='store_true', default=False,
         help="Generate vertically oriented textlines")
