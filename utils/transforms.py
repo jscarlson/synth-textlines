@@ -57,4 +57,13 @@ TRANSFORM_DICT = {
             lambda x: A.ImageCompression(quality_lower=0, quality_upper=100, p=0.20)(image=np.array(x))["image"],
             T.ToPILImage(),
         ]),
+    "simple":
+        T.Compose([
+            T.ToTensor(),
+            T.RandomGrayscale(p=1.0),
+            T.ToPILImage(),
+            lambda x: A.GaussNoise(var_limit=(10.0, 150.0), mean=0, p=0.25)(image=np.array(x))["image"],
+            lambda x: A.ImageCompression(quality_lower=0, quality_upper=100, p=0.20)(image=np.array(x))["image"],
+            T.ToPILImage(),
+        ]),
 }
