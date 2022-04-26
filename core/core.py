@@ -74,7 +74,7 @@ class TextlineGenerator:
         synth_seq = to_string_list(seq_numbers) + to_string_list(seq_spaces) + to_string_list(seq_chars)
 
         if not self.spec_seqs is None:
-            for _ in self.specseq_count:
+            for _ in range(self.specseq_count):
                 seq_spec = np.random.choice(self.spec_seqs, p=self.p_specseq)
                 synth_seq += [seq_spec]
 
