@@ -53,6 +53,8 @@ if __name__ == '__main__':
         help="Assert specific character sequences appear in renders at random, separated by pipes")
     parser.add_argument("--p_spec_seqs", type=str, default=None,
         help="The probability each specific sequence is included in a generated textline")
+    parser.add_argument("--spec_seq_count", type=int, default=1,
+        help="The number of specific sequences to be inserted")
     parser.add_argument('--word_bbox', action='store_true', default=False,
         help="Create bboxes for words too")
     parser.add_argument('--single_words', action='store_true', default=False,
@@ -111,7 +113,8 @@ if __name__ == '__main__':
             args.textline_numbers_geom_p, args.textline_max_numbers,
             args.language, args.vertical, args.specific_seqs,
             args.char_dist, args.char_dist_std, args.p_spec_seqs,
-            args.word_bbox, args.real_words, args.single_words
+            args.word_bbox, args.real_words, args.single_words,
+            args.spec_seq_count
         )
 
         for image_id in tqdm(range(count)):

@@ -15,7 +15,7 @@ class TextlineGenerator:
             synth_transform, coverage_dict,
             max_length, font_sizes, max_spaces, num_geom_p, max_numbers,
             language, vertical, spec_seqs, char_dist, char_dist_std,
-            p_specseq, word_bbox, real_words, single_words
+            p_specseq, word_bbox, real_words, single_words, specseq_count
         ):
 
         self.setname = setname
@@ -33,6 +33,7 @@ class TextlineGenerator:
         self.language = language
         self.vertical = vertical
         self.spec_seqs = spec_seqs.split("|") if not spec_seqs is None else None
+        self.specseq_count = specseq_count
         self.char_dist = char_dist
         self.char_dist_std = char_dist_std
         self.p_specseq = [float(x) for x in p_specseq.split(",")]
@@ -73,8 +74,9 @@ class TextlineGenerator:
         synth_seq = to_string_list(seq_numbers) + to_string_list(seq_spaces) + to_string_list(seq_chars)
 
         if not self.spec_seqs is None:
-            seq_spec = np.random.choice(self.spec_seqs, p=self.p_specseq)
-            synth_seq += [seq_spec]
+            for _ in self.specseq_count:
+                seq_spec = np.random.choice(self.spec_seqs, p=self.p_specseq)
+                synth_seq += [seq_spec]
 
         if self.num_real_words > 0:
             random_words = np.random.choice(self.words, self.num_real_words).tolist()
