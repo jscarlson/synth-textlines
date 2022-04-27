@@ -57,6 +57,19 @@ TRANSFORM_DICT = {
             lambda x: A.ImageCompression(quality_lower=0, quality_upper=100, p=0.20)(image=np.array(x))["image"],
             T.ToPILImage(),
         ]),
+    "trdgcolor":
+        T.Compose([
+            T.ToTensor(),
+            T.RandomApply([color_shift], p=0.5),
+            T.RandomApply([T.ColorJitter(brightness=0.5, contrast=0.3, saturation=0.3, hue=0.3)], p=0.5),
+            T.RandomGrayscale(p=0.25),
+            T.RandomApply([random_erode_dilate], p=0.6),
+            T.RandomApply([T.GaussianBlur(9, sigma=(1, 2))], p=0.5),
+            T.ToPILImage(),
+            lambda x: A.GaussNoise(var_limit=(10.0, 150.0), mean=0, p=0.25)(image=np.array(x))["image"],
+            lambda x: A.ImageCompression(quality_lower=0, quality_upper=100, p=0.20)(image=np.array(x))["image"],
+            T.ToPILImage(),
+        ]),
     "simple":
         T.Compose([
             T.ToTensor(),
