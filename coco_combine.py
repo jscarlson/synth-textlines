@@ -9,8 +9,7 @@ from tqdm import tqdm
 
 def process_coco_json(coco_json, input_n, tag):
     images = coco_json["images"]
-    N = len(images) if input_n is None else input_n
-    subset_images = np.random.choice(images, N, replace=False)
+    subset_images = images if input_n is None else np.random.choice(images, input_n, replace=False) 
     subset_image_ids = [im["id"] for im in subset_images]
     annotations = coco_json["annotations"]
     subset_annotations = [a for a in annotations if a["image_id"] in subset_image_ids]
@@ -65,10 +64,12 @@ if __name__ == '__main__':
     with open(args.input_coco_json_1) as f:
         coco_json_1 = json.load(f)
         images_1, annotations_1 = process_coco_json(coco_json_1, args.input_n_1, tag="inp1")
+        categories_1 = coco_json_1["categories"]
 
     with open(args.input_coco_json_2) as f:
         coco_json_2 = json.load(f)
         images_2, annotations_2 = process_coco_json(coco_json_2, args.input_n_2, tag="inp2")
+        categories_2 = coco_json_2["categories"]
 
     print("Combining JSONs!")
     combo_images, combo_annotations = \
@@ -78,7 +79,8 @@ if __name__ == '__main__':
         "images": combo_images,
         "annotations": combo_annotations,
         "info": {"year": 2022, "version": "1.0", "contributor": "synth-textlines"},
-        "categories": [{"id": 0, "name": "character"}],
+        "categories": [{"id": idx, "name": cat} for idx, cat in \
+            enumerate(set(categories_1.values() + categories_2.values()))],
         "licenses": ""
     }
 

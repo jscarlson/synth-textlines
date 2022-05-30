@@ -5,25 +5,37 @@ import os
 import copy
 
 
-def split_coco_json(coco_json, tvt_split, seed=99):
-    images = coco_json["images"]
+def split_coco_json(coco_json, tvt_split, seed=333):
+
     train_pct, val_pct, test_pct = tvt_split
     assert 0.9999 < train_pct + val_pct + test_pct <= 1
+
+    images = coco_json["images"]
+
     train_N = int(train_pct * len(images))
     val_N = int(val_pct * len(images))
+
     np.random.seed(seed)
     np.random.shuffle(images)
+
     train_images = images[:train_N]
     val_images = images[train_N:train_N+val_N]
     test_images = images[train_N+val_N:]
+
     train_image_ids = [im["id"] for im in train_images]
     val_image_ids = [im["id"] for im in val_images]
     test_image_ids = [im["id"] for im in test_images]
+
     annotations = coco_json["annotations"]
     train_annotations = [a for a in annotations if a["image_id"] in train_image_ids]
     val_annotations = [a for a in annotations if a["image_id"] in val_image_ids]
     test_annotations = [a for a in annotations if a["image_id"] in test_image_ids]
+
     assert len(train_images) + len(val_images) + len(test_images) == len(images)
+    assert set(train_image_ids) | set(val_image_ids) | set(test_image_ids) == set(im["id"] for im in images)
+    assert len(train_annotations) + len(val_annotations) + len(test_annotations) == len(annotations)
+    assert set(a["id"] for a in train_annotations) | set(a["id"] for a in val_annotations) | set(a["id"] for a in test_annotations) == set(a["id"] for a in annotations)
+
     return train_images, val_images, test_images, train_annotations, val_annotations, test_annotations
     
 

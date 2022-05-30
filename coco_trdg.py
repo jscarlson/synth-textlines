@@ -81,7 +81,7 @@ if __name__ == "__main__":
     images_dir = os.path.join(args.save_dir, "images")
     os.makedirs(images_dir)
 
-    trdg_transform = TRANSFORM_DICT["trdg"]
+    trdg_transform = TRANSFORM_DICT["trdgcolor"]
 
     for trdg_dir in tqdm(trdg_dirs):
         for path in glob(f"{trdg_dir}/*.jpg"):
