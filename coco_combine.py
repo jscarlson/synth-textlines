@@ -94,6 +94,8 @@ if __name__ == '__main__':
     for im in tqdm(combo_images):
         path1 = os.path.join(args.image_dir_1, im["file_name"])
         path2 = os.path.join(args.image_dir_2, im["file_name"])
+        if os.path.isfile(path1) and os.path.isfile(path2):
+            raise NameError
         path = path1 if os.path.isfile(path1) else path2
         assert os.path.isfile(path)
         if os.path.isfile(os.path.join(args.output_dir, "images", os.path.basename(path))):
