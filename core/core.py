@@ -88,39 +88,35 @@ class TextlineGenerator:
         synth_text = re.sub("_+",  "_", synth_text)
         self.num_symbols = len(synth_text)
 
+        assert len(synth_text) > 0
+
         return synth_text
 
     def generate_synthetic_word_text(self):
 
-        self.num_symbols = 0
+        random_word = np.random.choice(self.words)
 
-        while self.num_symbols == 0:
+        random_chars = []
+        num_chars = np.random.choice(range(1, self.max_length))
+        for char_set, prop in self.char_sets_and_props:
+            char_set_count = round(prop * num_chars)
+            available_chars = self.covered_chars.intersection(set(char_set))
+            chosen_chars = np.random.choice(list(available_chars), char_set_count)
+            random_chars.extend(chosen_chars)
+        np.random.shuffle(random_chars)
+        random_chars = "".join(random_chars)
 
-            random_word = np.random.choice(self.words)
+        if not self.spec_seqs is None:
+            seq_spec = np.random.choice(self.spec_seqs, p=self.p_specseq)
 
-            random_chars = []
-            num_chars = np.random.choice(range(1, self.max_length))
-            for char_set, prop in self.char_sets_and_props:
-                char_set_count = round(prop * num_chars)
-                available_chars = self.covered_chars.intersection(set(char_set))
-                chosen_chars = np.random.choice(list(available_chars), char_set_count)
-                random_chars.extend(chosen_chars)
-            np.random.shuffle(random_chars)
-            random_chars = "".join(random_chars)
+        synth_text = np.random.choice([
+            random_chars + seq_spec, 
+            seq_spec + random_chars, 
+            random_word + seq_spec, 
+            seq_spec + random_word
+        ])
 
-            if not self.spec_seqs is None:
-                seq_spec = np.random.choice(self.spec_seqs, p=self.p_specseq)
-
-            synth_text = np.random.choice([
-                random_chars + seq_spec, 
-                seq_spec + random_chars, 
-                random_word + seq_spec, 
-                seq_spec + random_word
-            ])
-
-            self.num_symbols = len(synth_text)
-
-        assert len(synth_text) > 0
+        self.num_symbols = len(synth_text)
 
         return synth_text
 
