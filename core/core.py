@@ -59,8 +59,9 @@ class TextlineGenerator:
 
         seq_chars = []
         num_chars = np.random.choice(range(1, self.max_length))
+        props = [x[1] for x in self.char_sets_and_props]
         for char_set, prop in self.char_sets_and_props:
-            if prop == max(self.char_sets_and_props) and round(prop * num_chars) == 0:
+            if prop == max(props) and round(prop * num_chars) == 0:
                 char_set_count = 1
             else:
                 char_set_count = round(prop * num_chars)
