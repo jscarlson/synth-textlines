@@ -60,7 +60,10 @@ class TextlineGenerator:
         seq_chars = []
         num_chars = np.random.choice(range(1, self.max_length))
         for char_set, prop in self.char_sets_and_props:
-            char_set_count = int(math.ceil(prop * num_chars))
+            if prop == max(self.char_sets_and_props) and round(prop * num_chars) == 0:
+                char_set_count = 1
+            else:
+                char_set_count = round(prop * num_chars)
             available_chars = self.covered_chars.intersection(set(char_set))
             chosen_chars = np.random.choice(list(available_chars), char_set_count)
             seq_chars.extend(chosen_chars)
