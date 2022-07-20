@@ -1,9 +1,8 @@
-from cProfile import run
-from numpy.lib.function_base import kaiser
 import numpy as np
 from PIL import ImageOps, Image, ImageFont, ImageDraw
 import os
 import re
+import math
 
 from utils.misc import *
 
@@ -61,7 +60,7 @@ class TextlineGenerator:
         seq_chars = []
         num_chars = np.random.choice(range(1, self.max_length))
         for char_set, prop in self.char_sets_and_props:
-            char_set_count = int(prop * num_chars)
+            char_set_count = int(math.ceil(prop * num_chars))
             available_chars = self.covered_chars.intersection(set(char_set))
             chosen_chars = np.random.choice(list(available_chars), char_set_count)
             seq_chars.extend(chosen_chars)
