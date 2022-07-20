@@ -89,7 +89,7 @@ class TextlineGenerator:
         synth_text = re.sub("_+",  "_", synth_text)
         self.num_symbols = len(synth_text)
 
-        assert len(synth_text) > 0
+        assert len(synth_text) > 0, synth_text
 
         return synth_text
 
