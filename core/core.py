@@ -45,7 +45,7 @@ class TextlineGenerator:
             assert os.name == "posix", "Not a unix OS; adding in real words won't work!"
             with open("/usr/share/dict/words", "r") as f:
                 words = re.sub("[^\w]", " ",  f.read()).split()
-        self.words = words
+            self.words = words
         self.num_real_words = real_words
         self.single_words = single_words
 
