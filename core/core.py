@@ -29,16 +29,17 @@ class TextlineGenerator:
         self.max_spaces = max_spaces
         self.num_geom_p = num_geom_p
         self.max_numbers = max_numbers
-        self.low_chars = ",.ygjqp"
+        self.low_chars = ",.ygjqp" if language == "en" else ""
         self.language = language
         self.vertical = vertical
         self.spec_seqs = spec_seqs.split("|") if not spec_seqs is None else None
-        self.specseq_count = specseq_count
+        self.specseq_count = specseq_count 
         self.char_dist = char_dist
         self.char_dist_std = char_dist_std
-        self.p_specseq = [float(x) for x in p_specseq.split(",")]
-        assert len(self.p_specseq) == len(self.spec_seqs)
-        assert round(sum(self.p_specseq), 4) == 1., f"Probs of spec seqs do not add to 1! ({sum(self.p_specseq)})"
+        self.p_specseq = [float(x) for x in p_specseq.split(",")] if not p_specseq is None else None
+        if not self.p_specseq is None:
+            assert len(self.p_specseq) == len(self.spec_seqs)
+            assert round(sum(self.p_specseq), 4) == 1., f"Probs of spec seqs do not add to 1! ({sum(self.p_specseq)})"
         self.word_bbox = word_bbox
         if real_words > 0 or single_words:
             assert os.name == "posix", "Not a unix OS; adding in real words won't work!"
