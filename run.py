@@ -61,6 +61,8 @@ if __name__ == '__main__':
         help="Generate images of single words or random character strings")
     parser.add_argument('--real_words', type=int, default=0,
         help="Number of real words to insert in generated textlines")
+    parser.add_argument('--wiki_text', action='store_true', default=False,
+        help="Create bboxes for words too")
     args = parser.parse_args()
 
     # create transforms
@@ -114,7 +116,7 @@ if __name__ == '__main__':
             args.language, args.vertical, args.specific_seqs,
             args.char_dist, args.char_dist_std, args.p_spec_seqs,
             args.word_bbox, args.real_words, args.single_words,
-            args.spec_seq_count
+            args.spec_seq_count, args.wiki_text
         )
 
         for image_id in tqdm(range(count)):

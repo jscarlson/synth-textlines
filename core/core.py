@@ -2,7 +2,7 @@ import numpy as np
 from PIL import ImageOps, Image, ImageFont, ImageDraw
 import os
 import re
-import math
+import wikipedia
 
 from utils.misc import *
 
@@ -14,7 +14,8 @@ class TextlineGenerator:
             synth_transform, coverage_dict,
             max_length, font_sizes, max_spaces, num_geom_p, max_numbers,
             language, vertical, spec_seqs, char_dist, char_dist_std,
-            p_specseq, word_bbox, real_words, single_words, specseq_count
+            p_specseq, word_bbox, real_words, single_words, specseq_count,
+            wiki_text
         ):
 
         self.setname = setname
@@ -47,6 +48,7 @@ class TextlineGenerator:
             self.words = words
         self.num_real_words = real_words
         self.single_words = single_words
+        self.wiki_text = wiki_text
 
     def select_font(self):
 
@@ -123,6 +125,20 @@ class TextlineGenerator:
         self.num_symbols = len(synth_text)
 
         return synth_text
+
+    def generate_synthetic_wiki_text(self):
+
+        wikipedia.set_lang(self.language)
+        random_page_name = wikipedia.random(pages=1)
+        random_page = wikipedia.page(random_page_name)
+        random_content = self.clean_wiki_text(random_page.content)
+
+        num_chars = np.random.choice(range(1, self.max_length))
+        random_start_idx = np.random.choice(range(0, len(random_content) - num_chars))
+        synth_text = random_content[random_start_idx:random_start_idx+num_chars]
+
+        return synth_text
+        
 
     def generate_synthetic_textline_image_latin_based(self, text):
 
@@ -265,10 +281,12 @@ class TextlineGenerator:
         self.select_font()
         if self.single_words:
             textline_text = self.generate_synthetic_word_text()
+        elif self.wiki_text:
+            textline_text = self.generate_synthetic_wiki_text()
         else:
             textline_text = self.generate_synthetic_textline_text()
 
-        if self.language == "jp":
+        if self.language == "jp" or self.language == "ja":
             out_dict = self.generate_synthetic_textline_image_character_based(textline_text)
         elif self.language == "en":
             out_dict = self.generate_synthetic_textline_image_latin_based(textline_text)
@@ -282,3 +300,7 @@ class TextlineGenerator:
         out_image.save(os.path.join(self.save_path, image_name))
 
         return out_dict
+
+    @staticmethod
+    def clean_wiki_text(x):
+        return x.replace("\n", "").replace("=", "")

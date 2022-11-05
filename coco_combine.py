@@ -43,32 +43,28 @@ if __name__ == '__main__':
 
     # args
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_coco_json_1", type=str, required=True,
+    parser.add_argument("--json1", type=str, required=True,
         help="")
-    parser.add_argument("--input_coco_json_2", type=str, required=True,
+    parser.add_argument("--json2", type=str, required=True,
         help="")
-    parser.add_argument("--image_dir_1", type=str, required=True,
+    parser.add_argument("--imdir1", type=str, required=True,
         help="")
-    parser.add_argument("--image_dir_2", type=str, required=True,
+    parser.add_argument("--imdir2", type=str, required=True,
         help="")
-    parser.add_argument("--input_n_1", type=int, default=None,
+    parser.add_argument("--outjsonname", type=str, required=True,
         help="")
-    parser.add_argument("--input_n_2", type=int, default=None,
-        help="")
-    parser.add_argument("--output_coco_json", type=str, required=True,
-        help="")
-    parser.add_argument("--output_dir", type=str, required=True,
+    parser.add_argument("--outdir", type=str, required=True,
         help="")
     args = parser.parse_args()
 
-    with open(args.input_coco_json_1) as f:
+    with open(args.json1) as f:
         coco_json_1 = json.load(f)
-        images_1, annotations_1 = process_coco_json(coco_json_1, args.input_n_1, tag="inp1")
+        images_1, annotations_1 = process_coco_json(coco_json_1, None, tag="inp1")
         categories_1 = {c["id"]:c["name"] for c in coco_json_1["categories"]}
 
-    with open(args.input_coco_json_2) as f:
+    with open(args.json2) as f:
         coco_json_2 = json.load(f)
-        images_2, annotations_2 = process_coco_json(coco_json_2, args.input_n_2, tag="inp2")
+        images_2, annotations_2 = process_coco_json(coco_json_2, None, tag="inp2")
         categories_2 = {c["id"]:c["name"] for c in coco_json_2["categories"]}
 
     print("Combining JSONs!")
@@ -84,20 +80,20 @@ if __name__ == '__main__':
         "licenses": ""
     }
 
-    os.makedirs(args.output_dir, exist_ok=True)
-    os.makedirs(os.path.join(args.output_dir, "images"), exist_ok=True)
+    os.makedirs(args.outdir, exist_ok=True)
+    os.makedirs(os.path.join(args.outdir, "images"), exist_ok=True)
 
-    with open(os.path.join(args.output_dir, args.output_coco_json), "w") as f:
+    with open(os.path.join(args.outdir, args.outjsonname), "w") as f:
         json.dump(combo_coco_json, f, indent=2)
 
     print("Combining image directories!")
     for im in tqdm(combo_images):
-        path1 = os.path.join(args.image_dir_1, im["file_name"])
-        path2 = os.path.join(args.image_dir_2, im["file_name"])
+        path1 = os.path.join(args.imdir1, im["file_name"])
+        path2 = os.path.join(args.imdir2, im["file_name"])
         if os.path.isfile(path1) and os.path.isfile(path2):
             raise NameError
         path = path1 if os.path.isfile(path1) else path2
         assert os.path.isfile(path)
-        if os.path.isfile(os.path.join(args.output_dir, "images", os.path.basename(path))):
+        if os.path.isfile(os.path.join(args.outdir, "images", os.path.basename(path))):
             continue
-        shutil.copy(path, os.path.join(args.output_dir, "images"))
+        shutil.copy(path, os.path.join(args.outdir, "images"))
