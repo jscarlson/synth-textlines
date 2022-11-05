@@ -131,9 +131,9 @@ class TextlineGenerator:
         wikipedia.set_lang(self.language)
         wikipedia.set_rate_limiting(rate_limit=True)
 
-        random_page_name = wikipedia.random(pages=1)
         random_page = None
         while random_page is None:
+            random_page_name = wikipedia.random(pages=1)
             random_page = self.wiki_check(random_page_name)
         
         random_content = self.clean_wiki_text(random_page.content)
@@ -141,6 +141,7 @@ class TextlineGenerator:
         num_chars = np.random.choice(range(1, self.max_length))
         random_start_idx = np.random.choice(range(0, len(random_content) - num_chars))
         synth_text = random_content[random_start_idx:random_start_idx+num_chars]
+        self.num_symbols = len(synth_text)
 
         return synth_text
         
@@ -311,9 +312,13 @@ class TextlineGenerator:
         return x.replace("\n", "").replace("=", "")
 
     @staticmethod
-    def wiki_check(random_page_name):
+    def wiki_check(random_page_name, min_size=50):
         try:
             random_page = wikipedia.page(random_page_name)
-            return random_page
+            if len(random_page.content) < min_size:
+                return None
+            else:
+                return random_page
         except (wikipedia.exceptions.PageError, wikipedia.exceptions.DisambiguationError):
+            print("Retrying...")
             return None
