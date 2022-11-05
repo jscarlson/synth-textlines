@@ -129,8 +129,13 @@ class TextlineGenerator:
     def generate_synthetic_wiki_text(self):
 
         wikipedia.set_lang(self.language)
+        wikipedia.set_rate_limiting(rate_limit=True)
+        
         random_page_name = wikipedia.random(pages=1)
-        random_page = wikipedia.page(random_page_name)
+        random_page = None
+        while random_page is None:
+            random_page = self.wiki_check(random_page_name)
+        
         random_content = self.clean_wiki_text(random_page.content)
 
         num_chars = np.random.choice(range(1, self.max_length))
@@ -304,3 +309,11 @@ class TextlineGenerator:
     @staticmethod
     def clean_wiki_text(x):
         return x.replace("\n", "").replace("=", "")
+
+    @staticmethod
+    def wiki_check(random_page_name):
+        try:
+            random_page = wikipedia.page(random_page_name)
+            return random_page
+        except wikipedia.exceptions.PageError:
+            return None
