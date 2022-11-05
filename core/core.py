@@ -130,7 +130,7 @@ class TextlineGenerator:
 
         wikipedia.set_lang(self.language)
         wikipedia.set_rate_limiting(rate_limit=True)
-        
+
         random_page_name = wikipedia.random(pages=1)
         random_page = None
         while random_page is None:
@@ -315,5 +315,5 @@ class TextlineGenerator:
         try:
             random_page = wikipedia.page(random_page_name)
             return random_page
-        except wikipedia.exceptions.PageError:
+        except (wikipedia.exceptions.PageError, wikipedia.exceptions.DisambiguationError):
             return None
