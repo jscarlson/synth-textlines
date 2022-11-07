@@ -136,7 +136,7 @@ class TextlineGenerator:
             random_page_name = wikipedia.random(pages=1)
             random_page = self.wiki_check(random_page_name)
         
-        random_content = self.clean_wiki_text(random_page.content)
+        random_content = self.clean_wiki_text(random_page.content, self.language)
 
         num_chars = np.random.choice(range(1, self.max_length))
         random_start_idx = np.random.choice(range(0, len(random_content) - num_chars))
@@ -308,8 +308,11 @@ class TextlineGenerator:
         return out_dict
 
     @staticmethod
-    def clean_wiki_text(x):
-        return x.replace("\n", "").replace("=", "")
+    def clean_wiki_text(x, language):
+        clean_text = x.replace("\n", "").replace("=", "")
+        if language == "ja" or language == "jp":
+            clean_text = ''.join([i if ord(i) > 128 else '' for i in clean_text])
+        return clean_text
 
     @staticmethod
     def wiki_check(random_page_name, min_size=50):
