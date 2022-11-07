@@ -138,7 +138,7 @@ class TextlineGenerator:
             random_page_name = wikipedia.random(pages=1)
             random_page = self.wiki_check(random_page_name)
         
-        random_content = self.clean_wiki_text(random_page.content, self.language)
+        random_content = self.clean_wiki_text(random_page.content)
 
         num_chars = np.random.choice(range(1, self.max_length))
         random_start_idx = np.random.choice(range(0, len(random_content) - num_chars))
