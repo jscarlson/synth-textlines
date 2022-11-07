@@ -21,6 +21,8 @@ class TextlineGenerator:
         self.setname = setname
         self.font_paths = font_paths
         self.char_sets_and_props = char_sets_and_props
+        self.char_sets = [char_set for char_set, prop in self.char_sets_and_props]
+        self.all_chars = set(sum(self.char_sets, []))
         self.save_path = save_path
         self.synth_transform = synth_transform
         self.coverage_dict = coverage_dict
@@ -307,11 +309,9 @@ class TextlineGenerator:
 
         return out_dict
 
-    @staticmethod
-    def clean_wiki_text(x, language):
+    def clean_wiki_text(self, x):
         clean_text = x.replace("\n", "").replace("=", "")
-        if language == "ja" or language == "jp":
-            clean_text = ''.join([i if ord(i) > 128 else '' for i in clean_text])
+        clean_text = ''.join([i if i in self.all_chars else '' for i in clean_text])
         return clean_text
 
     @staticmethod
