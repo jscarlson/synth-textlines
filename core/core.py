@@ -311,7 +311,7 @@ class TextlineGenerator:
 
     def clean_wiki_text(self, x):
         clean_text = x.replace("\n", "").replace("=", "")
-        clean_text = ''.join([i if i in self.all_chars else '' for i in clean_text])
+        clean_text = ''.join([i if (i in self.all_chars or i==" ") else '' for i in clean_text])
         return clean_text
 
     @staticmethod
