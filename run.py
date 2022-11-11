@@ -161,4 +161,4 @@ if __name__ == '__main__':
 
     # charset
     with open(os.path.join(outdir, f"charset.txt"), 'w') as f:
-        f.write("\n".join(ord(c) for c in list(textline_generator.all_chars)))
+        f.write("\n".join(str(ord(c)) for c in list(textline_generator.all_chars)))
