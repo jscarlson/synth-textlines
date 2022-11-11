@@ -6,6 +6,8 @@ from fontTools.unicode import Unicode
 def load_chars(path):
     with open(path) as f:
         chars = f.read().split("\n")
+        if chars[0].isdigit():
+            chars = [chr(c) for c in chars]
     return chars
 
 
