@@ -158,3 +158,7 @@ if __name__ == '__main__':
         coco_json["annotations"] = anns_dict[setname]
         with open(os.path.join(outdir, f"{setname}{int(pct*100)}.json"), 'w') as f:
             json.dump(coco_json, f, indent=2)
+
+    # charset
+    with open(os.path.join(outdir, f"charset.txt"), 'w') as f:
+        f.write("\n".join(ord(c) for c in list(textline_generator.all_chars)))
