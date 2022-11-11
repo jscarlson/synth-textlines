@@ -141,8 +141,12 @@ class TextlineGenerator:
         random_content = self.clean_wiki_text(random_page.content)
 
         num_chars = np.random.choice(range(1, self.max_length))
-        random_start_idx = np.random.choice(range(0, len(random_content) - num_chars))
-        synth_text = random_content[random_start_idx:random_start_idx+num_chars]
+        synth_text = " "
+
+        while str.isspace(synth_text):
+            random_start_idx = np.random.choice(range(0, len(random_content) - num_chars))
+            synth_text = random_content[random_start_idx:random_start_idx+num_chars]
+            
         self.num_symbols = len(synth_text)
 
         return synth_text
